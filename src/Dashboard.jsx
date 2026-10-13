@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from './firebase'
-import atvLogo from './assets/atv-logo.webp'
 import AttendanceSection from './hrms/AttendanceSection.jsx'
 import EmployeeSection from './hrms/EmployeeSection.jsx'
 import LeaveSection from './hrms/LeaveSection.jsx'
@@ -10,6 +9,9 @@ import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import './Dashboard.css'
 import './hrms/hrms.css'
+
+const ATV_MARK_URL =
+  'https://cdn.builder.io/api/v1/image/assets%2Fbe4f45e0d3a8447cad3e911783d5b4fa%2F763872ed0a73419193efedc08b2ca7a5?format=webp&width=800&height=1200'
 
 const navItems = [
   { label: 'Home', icon: 'home', active: true },
@@ -23,10 +25,10 @@ const navItems = [
 const recentActions = ['Apply Leave', 'Add an Expense', 'View Pay Slips', 'Refer a Candidate']
 
 const stats = [
-  { label: 'Pending tasks', value: '02', tone: 'blue' },
-  { label: 'Rejected expenses', value: '01', tone: 'red' },
-  { label: 'Approved leave', value: '01', tone: 'green' },
-  { label: 'Pending reviews', value: '04', tone: 'amber' },
+  { label: 'Pending tasks', value: '02', tone: 'blue', icon: 'clock' },
+  { label: 'Rejected expenses', value: '01', tone: 'red', icon: 'wallet' },
+  { label: 'Approved leave', value: '01', tone: 'green', icon: 'user' },
+  { label: 'Pending reviews', value: '04', tone: 'amber', icon: 'team' },
 ]
 
 const peers = [
@@ -171,12 +173,18 @@ export default function Dashboard({ user }) {
   const name = user.displayName || user.email.split('@')[0]
   const initial = name.charAt(0).toUpperCase()
   const visiblePosts = posts.filter((post) => post.scope === scope)
+  const hour = now.getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="dash">
       <aside className="dash-sidebar">
         <div className="dash-brand">
-          <img src={atvLogo} alt="ATV Technologies" />
+          <img src={ATV_MARK_URL} alt="ATV Technologies" />
+          <div className="dash-brand-text">
+            <strong>ATV Technologies</strong>
+            <span>HRMS</span>
+          </div>
         </div>
         <nav className="dash-nav">
           {navItems.map((item) => (
@@ -241,7 +249,7 @@ export default function Dashboard({ user }) {
 
           <div className="dash-greeting">
             <h2>
-              Welcome back, <span>{name}</span>
+              {greeting}, <span>{name}</span>
             </h2>
             <p>
               {now.toLocaleDateString('en-US', {
@@ -255,6 +263,9 @@ export default function Dashboard({ user }) {
           <div className="dash-stats">
             {stats.map((stat) => (
               <div key={stat.label} className={`dash-stat dash-stat-${stat.tone}`}>
+                <span className="dash-stat-icon">
+                  <Icon name={stat.icon} />
+                </span>
                 <span className="dash-stat-value">{stat.value}</span>
                 <span className="dash-stat-label">{stat.label}</span>
               </div>

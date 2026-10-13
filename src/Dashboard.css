@@ -11,7 +11,7 @@
   height: 100svh;
   overflow: hidden;
   box-sizing: border-box;
-  background: var(--dash-bg);
+  background: linear-gradient(180deg, #f5f8fd 0%, #eef5f2 100%);
   color: var(--dash-muted);
   font-size: 14px;
   text-align: left;
@@ -29,17 +29,42 @@
 }
 
 .dash-brand {
-  padding: 8px;
-  border-radius: 12px;
-  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
 }
 
 .dash-brand img {
-  display: block;
-  width: 100%;
-  max-width: 150px;
-  height: auto;
-  margin: 0 auto;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.dash-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.dash-brand-text strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dash-brand-text span {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #9fb0c8;
 }
 
 .dash-nav,
@@ -202,6 +227,8 @@
 }
 
 .dash-banner {
+  position: relative;
+  overflow: hidden;
   padding: 24px 28px;
   border-radius: 16px;
   background: linear-gradient(120deg, var(--dash-blue) 0%, #1a8f8a 60%, var(--dash-green) 100%);
@@ -218,6 +245,22 @@
     font-weight: 700;
     color: #fff;
   }
+}
+
+.dash-banner::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 36px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+.dash-banner > * {
+  position: relative;
 }
 
 .dash-banner-eyebrow {
@@ -470,6 +513,32 @@
   color: #0f8a5f;
   font-size: 12px;
   font-weight: 600;
+}
+
+.dash-card,
+.dash-stat {
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.dash-card:hover {
+  box-shadow: 0 12px 28px -18px rgba(20, 33, 61, 0.35);
+}
+
+.dash-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -16px rgba(20, 33, 61, 0.35);
+}
+
+.dash-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: var(--tone);
 }
 
 @media (max-width: 1100px) {
