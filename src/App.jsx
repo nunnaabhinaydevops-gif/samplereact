@@ -78,6 +78,11 @@ function App() {
     <AuthLayout>
       <div className="auth-panel-header">
         <h1>{isSignup ? 'Create account' : 'Log in'}</h1>
+        <p className="auth-subtitle">
+          {isSignup
+            ? 'Sign up with your email and a password.'
+            : 'Welcome back! Enter your details to continue.'}
+        </p>
       </div>
       <div className="auth-panel-body">
         <form onSubmit={handleSubmit}>
