@@ -6,7 +6,23 @@ import {
   signOut,
 } from 'firebase/auth'
 import { auth } from './firebase'
+import atvLogo from './assets/atv-logo.webp'
 import './App.css'
+
+function AuthLayout({ children }) {
+  return (
+    <main className="auth-page">
+      <div className="auth-shell">
+        <aside className="auth-brand">
+          <div className="auth-logo-frame">
+            <img src={atvLogo} alt="ATV Technologies logo" />
+          </div>
+        </aside>
+        <section className="auth-panel">{children}</section>
+      </div>
+    </main>
+  )
+}
 
 function App() {
   const [mode, setMode] = useState('login')
@@ -42,24 +58,28 @@ function App() {
 
   if (user) {
     return (
-      <main className="auth-page">
-        <div className="auth-card">
+      <AuthLayout>
+        <div className="auth-panel-header">
           <h1>Welcome</h1>
+        </div>
+        <div className="auth-panel-body">
           <p className="auth-email">{user.email}</p>
           <button type="button" onClick={() => signOut(auth)}>
             Sign out
           </button>
         </div>
-      </main>
+      </AuthLayout>
     )
   }
 
   const isSignup = mode === 'signup'
 
   return (
-    <main className="auth-page">
-      <div className="auth-card">
+    <AuthLayout>
+      <div className="auth-panel-header">
         <h1>{isSignup ? 'Create account' : 'Log in'}</h1>
+      </div>
+      <div className="auth-panel-body">
         <form onSubmit={handleSubmit}>
           <label>
             Email
@@ -100,7 +120,7 @@ function App() {
             : "Don't have an account? Sign up"}
         </button>
       </div>
-    </main>
+    </AuthLayout>
   )
 }
 
