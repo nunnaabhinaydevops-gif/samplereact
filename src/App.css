@@ -213,13 +213,6 @@ body {
   font-size: 14px;
 }
 
-.auth-email {
-  margin: 0;
-  font-size: 16px;
-  color: var(--auth-ink);
-  word-break: break-all;
-}
-
 .auth-panel-body .auth-switch {
   align-self: center;
   padding: 0;

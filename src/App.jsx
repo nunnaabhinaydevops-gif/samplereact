@@ -3,10 +3,10 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  signOut,
 } from 'firebase/auth'
 import { auth } from './firebase'
 import atvLogo from './assets/atv-logo.webp'
+import Dashboard from './Dashboard.jsx'
 import './App.css'
 
 function AuthLayout({ children }) {
@@ -57,19 +57,7 @@ function App() {
   }
 
   if (user) {
-    return (
-      <AuthLayout>
-        <div className="auth-panel-header">
-          <h1>Welcome</h1>
-        </div>
-        <div className="auth-panel-body">
-          <p className="auth-email">{user.email}</p>
-          <button type="button" onClick={() => signOut(auth)}>
-            Sign out
-          </button>
-        </div>
-      </AuthLayout>
-    )
+    return <Dashboard user={user} />
   }
 
   const isSignup = mode === 'signup'
