@@ -8,7 +8,8 @@
 
   display: grid;
   grid-template-columns: 220px 1fr;
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
   box-sizing: border-box;
   background: var(--dash-bg);
   color: var(--dash-muted);
@@ -19,8 +20,10 @@
 .dash-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 14px;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px 14px;
+  overflow-y: auto;
   background: linear-gradient(180deg, #14213d 0%, #123a40 100%);
   color: #c9d3e3;
 }
@@ -34,7 +37,9 @@
 .dash-brand img {
   display: block;
   width: 100%;
+  max-width: 150px;
   height: auto;
+  margin: 0 auto;
 }
 
 .dash-nav,
@@ -102,6 +107,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .dash-topbar {
@@ -188,8 +194,11 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  flex: 1;
+  min-height: 0;
   padding: 24px;
   min-width: 0;
+  overflow-y: auto;
 }
 
 .dash-banner {
@@ -277,7 +286,7 @@
 
 .dash-columns {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -472,6 +481,13 @@
 @media (max-width: 900px) {
   .dash {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+
+  .dash-sidebar,
+  .dash-content {
+    overflow: visible;
   }
 
   .dash-sidebar {
