@@ -7,6 +7,7 @@ import LeaveSection from './hrms/LeaveSection.jsx'
 import PayrollSection from './hrms/PayrollSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
+import MeSection from './me/MeSection.jsx'
 import { formatDate } from './hrms/format.js'
 import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
 import './Dashboard.css'
@@ -18,8 +19,8 @@ const ATV_MARK_URL =
 const INBOX_COUNT = 3
 
 const railItems = [
-  { label: 'Home', icon: 'home', active: true },
-  { label: 'Me', icon: 'user' },
+  { label: 'Home', icon: 'home', view: 'home' },
+  { label: 'Me', icon: 'user', view: 'me' },
   { label: 'My Team', icon: 'team' },
   { label: 'Org', icon: 'building' },
   { label: 'Time', icon: 'clock' },
@@ -209,6 +210,7 @@ export default function Dashboard({ user }) {
   const now = useNow()
   const [scope, setScope] = useState('Organisation')
   const [activeSubnav, setActiveSubnav] = useState('Home')
+  const [view, setView] = useState('home')
   const [composerTab, setComposerTab] = useState('Post')
   const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests)
 
@@ -262,7 +264,8 @@ export default function Dashboard({ user }) {
           <button
             key={item.label}
             type="button"
-            className={item.active ? 'dash-rail-item is-active' : 'dash-rail-item'}
+            className={item.view === view ? 'dash-rail-item is-active' : 'dash-rail-item'}
+            onClick={() => item.view && setView(item.view)}
           >
             <Icon name={item.icon} />
             <span>{item.label}</span>
@@ -285,137 +288,143 @@ export default function Dashboard({ user }) {
       </nav>
 
       <main className="dash-content">
-        <div className="dash-columns">
-          <div className="dash-stack">
-            <section className="dash-holiday">
-              <p className="dash-holiday-label">Holidays</p>
-              <h3>{nextHoliday.name}</h3>
-              <p>{formatDate(nextHoliday.date)}</p>
-            </section>
+        {view === 'me' ? (
+          <MeSection user={user} />
+        ) : (
+          <>
+            <div className="dash-columns">
+              <div className="dash-stack">
+                <section className="dash-holiday">
+                  <p className="dash-holiday-label">Holidays</p>
+                  <h3>{nextHoliday.name}</h3>
+                  <p>{formatDate(nextHoliday.date)}</p>
+                </section>
 
-            <section className="dash-card">
-              <h4 className="dash-card-title">Time today · {todayLabel}</h4>
-              <span className="dash-muted-label">Clocked time</span>
-              <p className="dash-clock">{clock}</p>
-            </section>
+                <section className="dash-card">
+                  <h4 className="dash-card-title">Time today · {todayLabel}</h4>
+                  <span className="dash-muted-label">Clocked time</span>
+                  <p className="dash-clock">{clock}</p>
+                </section>
 
-            <section className="dash-card">
-              <h4 className="dash-card-title">Leave balances</h4>
-              <div className="dash-rings">
-                {balances.map((balance) => (
-                  <BalanceRing
-                    key={balance.type}
-                    label={balance.type.replace(' leave', '')}
-                    remaining={balance.total - balance.used}
-                    total={balance.total}
-                  />
+                <section className="dash-card">
+                  <h4 className="dash-card-title">Leave balances</h4>
+                  <div className="dash-rings">
+                    {balances.map((balance) => (
+                      <BalanceRing
+                        key={balance.type}
+                        label={balance.type.replace(' leave', '')}
+                        remaining={balance.total - balance.used}
+                        total={balance.total}
+                      />
+                    ))}
+                  </div>
+                  <div className="dash-links">
+                    <a href="#hrms-modules">Apply leave</a>
+                    <a href="#hrms-modules">View all balances</a>
+                  </div>
+                </section>
+
+                <section className="dash-card">
+                  <h4 className="dash-card-title">Inbox</h4>
+                  <div className="dash-inbox-row">
+                    <span className="dash-inbox-count">{INBOX_COUNT}</span>
+                    <p>Tasks waiting for you, including leave approvals and expense claims.</p>
+                  </div>
+                  <a className="dash-action" href="#hrms-modules">
+                    Take action
+                  </a>
+                </section>
+
+                <section className="dash-card">
+                  <h4 className="dash-card-title">Peers</h4>
+                  {peers.map((peer) => (
+                    <div key={peer.name} className="dash-peer">
+                      <span className="dash-peer-avatar">{peer.initials}</span>
+                      <div>
+                        <p className="dash-peer-name">{peer.name}</p>
+                        <p className="dash-peer-meta">{peer.role}</p>
+                        <p className="dash-peer-meta">{peer.location}</p>
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              </div>
+
+              <div className="dash-stack">
+                <div className="dash-tabs">
+                  {['Organisation', 'Marketing'].map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={scope === option ? 'dash-tab is-active' : 'dash-tab'}
+                      aria-pressed={scope === option}
+                      onClick={() => setScope(option)}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
+                <section className="dash-card dash-composer">
+                  <div className="dash-composer-tabs">
+                    {composerTabs.map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        className={composerTab === tab ? 'dash-composer-tab is-active' : 'dash-composer-tab'}
+                        onClick={() => setComposerTab(tab)}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea placeholder="Write your post here..." rows={3} />
+                </section>
+
+                <section className="dash-card dash-today">
+                  <span className="dash-card-title">Today</span>
+                  {todayCounts.map((item) => (
+                    <span key={item.label} className="dash-today-item">
+                      {item.label} <strong>{item.value}</strong>
+                    </span>
+                  ))}
+                </section>
+
+                {visiblePosts.length === 0 && <p className="dash-empty">No posts in {scope} yet.</p>}
+                {visiblePosts.map((post) => (
+                  <article key={post.id} className="dash-card dash-post">
+                    <div className="dash-post-head">
+                      <span className="dash-post-avatar">{post.initials}</span>
+                      <div>
+                        <p>
+                          <strong>{post.from}</strong> praised <strong>{post.to}</strong>
+                        </p>
+                        <p className="dash-post-meta">{post.ago}</p>
+                      </div>
+                    </div>
+                    <div className="dash-post-body">
+                      <span className="dash-tag">{post.tag}</span>
+                      <p>{post.message}</p>
+                    </div>
+                    <div className="dash-post-foot">
+                      <span>{post.likes} likes</span>
+                      <span>{post.comments} comments</span>
+                    </div>
+                  </article>
                 ))}
               </div>
-              <div className="dash-links">
-                <a href="#hrms-modules">Apply leave</a>
-                <a href="#hrms-modules">View all balances</a>
-              </div>
-            </section>
-
-            <section className="dash-card">
-              <h4 className="dash-card-title">Inbox</h4>
-              <div className="dash-inbox-row">
-                <span className="dash-inbox-count">{INBOX_COUNT}</span>
-                <p>Tasks waiting for you, including leave approvals and expense claims.</p>
-              </div>
-              <a className="dash-action" href="#hrms-modules">
-                Take action
-              </a>
-            </section>
-
-            <section className="dash-card">
-              <h4 className="dash-card-title">Peers</h4>
-              {peers.map((peer) => (
-                <div key={peer.name} className="dash-peer">
-                  <span className="dash-peer-avatar">{peer.initials}</span>
-                  <div>
-                    <p className="dash-peer-name">{peer.name}</p>
-                    <p className="dash-peer-meta">{peer.role}</p>
-                    <p className="dash-peer-meta">{peer.location}</p>
-                  </div>
-                </div>
-              ))}
-            </section>
-          </div>
-
-          <div className="dash-stack">
-            <div className="dash-tabs">
-              {['Organisation', 'Marketing'].map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={scope === option ? 'dash-tab is-active' : 'dash-tab'}
-                  aria-pressed={scope === option}
-                  onClick={() => setScope(option)}
-                >
-                  {option}
-                </button>
-              ))}
             </div>
 
-            <section className="dash-card dash-composer">
-              <div className="dash-composer-tabs">
-                {composerTabs.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    className={composerTab === tab ? 'dash-composer-tab is-active' : 'dash-composer-tab'}
-                    onClick={() => setComposerTab(tab)}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <textarea placeholder="Write your post here..." rows={3} />
-            </section>
-
-            <section className="dash-card dash-today">
-              <span className="dash-card-title">Today</span>
-              {todayCounts.map((item) => (
-                <span key={item.label} className="dash-today-item">
-                  {item.label} <strong>{item.value}</strong>
-                </span>
-              ))}
-            </section>
-
-            {visiblePosts.length === 0 && <p className="dash-empty">No posts in {scope} yet.</p>}
-            {visiblePosts.map((post) => (
-              <article key={post.id} className="dash-card dash-post">
-                <div className="dash-post-head">
-                  <span className="dash-post-avatar">{post.initials}</span>
-                  <div>
-                    <p>
-                      <strong>{post.from}</strong> praised <strong>{post.to}</strong>
-                    </p>
-                    <p className="dash-post-meta">{post.ago}</p>
-                  </div>
-                </div>
-                <div className="dash-post-body">
-                  <span className="dash-tag">{post.tag}</span>
-                  <p>{post.message}</p>
-                </div>
-                <div className="dash-post-foot">
-                  <span>{post.likes} likes</span>
-                  <span>{post.comments} comments</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div id="hrms-modules" className="hrms-grid">
-          <EmployeeSection />
-          <AttendanceSection />
-          <LeaveSection requests={leaveRequests} setRequests={setLeaveRequests} />
-          <PayrollSection />
-          <RecruitmentSection />
-          <PerformanceSection />
-        </div>
+            <div id="hrms-modules" className="hrms-grid">
+              <EmployeeSection />
+              <AttendanceSection />
+              <LeaveSection requests={leaveRequests} setRequests={setLeaveRequests} />
+              <PayrollSection />
+              <RecruitmentSection />
+              <PerformanceSection />
+            </div>
+          </>
+        )}
       </main>
     </div>
   )
