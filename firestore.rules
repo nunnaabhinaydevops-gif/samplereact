@@ -20,16 +20,33 @@ service cloud.firestore {
       return hasProfile() && profile().active == true;
     }
 
+    function hasRole(roles) {
+      return isActive() && profile().role in roles;
+    }
+
     function isSuperAdmin() {
-      return isActive() && profile().role == 'SUPER_ADMIN';
+      return hasRole(['SUPER_ADMIN']);
     }
 
     function isHrAdmin() {
-      return isActive() && profile().role in ['SUPER_ADMIN', 'HR_ADMIN'];
+      return hasRole(['SUPER_ADMIN', 'HR_ADMIN']);
+    }
+
+    function isDirectoryReader() {
+      return hasRole(['SUPER_ADMIN', 'HR_ADMIN', 'PAYROLL_ADMIN']);
     }
 
     function isManager() {
-      return isActive() && profile().role == 'MANAGER';
+      return hasRole(['MANAGER']);
+    }
+
+    function isValidEmployee(data) {
+      return data.firstName is string && data.firstName.size() > 0 && data.firstName.size() <= 80
+        && data.lastName is string && data.lastName.size() > 0 && data.lastName.size() <= 80
+        && data.employeeCode is string && data.employeeCode.size() > 0 && data.employeeCode.size() <= 40
+        && data.email is string && data.email.size() <= 254
+        && data.employmentStatus in ['ACTIVE', 'INACTIVE']
+        && data.employmentType in ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN'];
     }
 
     match /users/{uid} {
@@ -45,12 +62,29 @@ service cloud.firestore {
     }
 
     match /employees/{employeeId} {
-      allow get: if isHrAdmin()
+      allow get: if isDirectoryReader()
         || (isManager() && resource.data.reportingManagerUid == request.auth.uid)
         || (isActive() && resource.data.userId == request.auth.uid);
-      allow list: if isHrAdmin()
+      allow list: if isDirectoryReader()
         || (isManager() && resource.data.reportingManagerUid == request.auth.uid);
-      allow create, update, delete: if isHrAdmin();
+      allow create, update: if isHrAdmin() && isValidEmployee(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isHrAdmin();
+      allow create: if isHrAdmin()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action is string;
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isActive() && resource.data.userId == request.auth.uid;
+      allow update: if isActive()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']);
+      allow create, delete: if false;
     }
   }
 }

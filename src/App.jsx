@@ -3,9 +3,13 @@ import AppShell from './components/AppShell'
 import StatusScreen from './components/StatusScreen'
 import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './hooks/useAuth'
+import { useEmployees } from './hooks/useEmployees'
 import DashboardPage from './pages/DashboardPage'
+import EmployeesPage from './pages/EmployeesPage'
 import LoginPage from './pages/LoginPage'
 import ModulePlaceholder from './pages/ModulePlaceholder'
+import MyProfilePage from './pages/MyProfilePage'
+import { fullName } from './lib/format'
 import { getVisibleModules } from './lib/roles'
 
 function App() {
@@ -17,8 +21,7 @@ function App() {
 }
 
 function Gate() {
-  const { authReady, firebaseUser, profile, profileStatus, profileError, signOut } = useAuth()
-  const [activeKey, setActiveKey] = useState('dashboard')
+  const { authReady, firebaseUser, profileStatus, profileError, signOut } = useAuth()
 
   if (!authReady) {
     return <StatusScreen title="Loading…" />
@@ -62,26 +65,68 @@ function Gate() {
     )
   }
 
+  return <Workspace />
+}
+
+function Workspace() {
+  const { profile } = useAuth()
   const modules = getVisibleModules(profile.role)
+  const directory = useEmployees()
+  const [route, setRoute] = useState({ key: 'dashboard', employeeId: null })
+
   if (modules.length === 0) {
     return (
       <StatusScreen
         title="Role not recognized"
         message="Your account has an unknown role. Contact HR to correct it."
-        onSignOut={signOut}
       />
     )
   }
 
-  const activeModule = modules.find((module) => module.key === activeKey) ?? modules[0]
+  const isAllowed = route.key === 'my-profile' || modules.some((module) => module.key === route.key)
+  const activeRoute = isAllowed ? route : { key: 'dashboard', employeeId: null }
+
+  function navigate(key, params = {}) {
+    setRoute({ key, employeeId: params.employeeId ?? null })
+  }
+
+  const moduleLabel =
+    activeRoute.key === 'my-profile'
+      ? 'My profile'
+      : modules.find((module) => module.key === activeRoute.key)?.label ?? ''
+
+  const breadcrumbs = [{ label: 'Dashboard', onClick: () => navigate('dashboard') }]
+  if (activeRoute.key !== 'dashboard') {
+    breadcrumbs.push({
+      label: moduleLabel,
+      onClick: activeRoute.employeeId ? () => navigate(activeRoute.key) : undefined,
+    })
+  }
+  if (activeRoute.employeeId) {
+    const employee = directory.employees.find((item) => item.id === activeRoute.employeeId)
+    breadcrumbs.push({ label: employee ? fullName(employee) : 'Employee' })
+  }
+
+  let content
+  if (activeRoute.key === 'dashboard') {
+    content = <DashboardPage directory={directory} onNavigate={navigate} />
+  } else if (activeRoute.key === 'employees') {
+    content = <EmployeesPage directory={directory} route={activeRoute} onNavigate={navigate} />
+  } else if (activeRoute.key === 'my-profile') {
+    content = <MyProfilePage />
+  } else {
+    content = <ModulePlaceholder module={modules.find((module) => module.key === activeRoute.key)} />
+  }
 
   return (
-    <AppShell modules={modules} activeKey={activeModule.key} onSelect={setActiveKey}>
-      {activeModule.key === 'dashboard' ? (
-        <DashboardPage />
-      ) : (
-        <ModulePlaceholder module={activeModule} />
-      )}
+    <AppShell
+      modules={modules}
+      activeKey={activeRoute.key}
+      onNavigate={navigate}
+      breadcrumbs={breadcrumbs}
+      searchEmployees={directory.status === 'ready' ? directory.employees : []}
+    >
+      {content}
     </AppShell>
   )
 }
