@@ -14,12 +14,13 @@ function App() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [user, setUser] = useState(undefined)
+  const [user, setUser] = useState(auth ? undefined : null)
 
-  useEffect(() => onAuthStateChanged(auth, setUser), [])
+  useEffect(() => (auth ? onAuthStateChanged(auth, setUser) : undefined), [])
 
   async function handleSubmit(event) {
     event.preventDefault()
+    if (!auth) return
     setError('')
     setSubmitting(true)
     try {
@@ -82,8 +83,13 @@ function App() {
               required
             />
           </label>
+          {!auth && (
+            <p className="auth-error">
+              Firebase is not configured. Add the VITE_FIREBASE_* variables.
+            </p>
+          )}
           {error && <p className="auth-error">{error}</p>}
-          <button type="submit" disabled={submitting}>
+          <button type="submit" disabled={submitting || !auth}>
             {isSignup ? 'Sign up' : 'Log in'}
           </button>
         </form>
