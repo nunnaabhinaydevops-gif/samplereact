@@ -1,25 +1,17 @@
 import { useState } from 'react'
-import { holidays, initialLeaveRequests, leaveBalances, leaveTypes } from './data'
+import { getLeaveBalances, holidays, leaveTypes } from './data'
 import { Chip, Panel, Progress } from './ui'
-import { countDays, formatDate, statusTone } from './format'
+import { formatDate, statusTone } from './format'
 
 const emptyDraft = { type: leaveTypes[0], from: '', to: '' }
 
-export default function LeaveSection() {
-  const [requests, setRequests] = useState(initialLeaveRequests)
+export default function LeaveSection({ requests, setRequests }) {
   const [draft, setDraft] = useState(emptyDraft)
 
   const myRequests = requests.filter((request) => request.employee === 'You')
   const teamRequests = requests.filter((request) => request.employee !== 'You')
   const teamOnLeave = teamRequests.filter((request) => request.status === 'Approved')
-
-  const balances = leaveBalances.map((balance) => {
-    const approvedDays = myRequests
-      .filter((request) => request.type === balance.type && request.status === 'Approved')
-      .reduce((sum, request) => sum + countDays(request.from, request.to), 0)
-    const used = balance.used + approvedDays
-    return { ...balance, used, percent: (used / balance.total) * 100 }
-  })
+  const balances = getLeaveBalances(requests)
 
   function decide(id, status) {
     setRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status } : request)))

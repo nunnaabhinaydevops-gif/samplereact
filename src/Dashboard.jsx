@@ -7,28 +7,35 @@ import LeaveSection from './hrms/LeaveSection.jsx'
 import PayrollSection from './hrms/PayrollSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
+import { formatDate } from './hrms/format.js'
+import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
 import './Dashboard.css'
 import './hrms/hrms.css'
 
 const ATV_MARK_URL =
   'https://cdn.builder.io/api/v1/image/assets%2Fbe4f45e0d3a8447cad3e911783d5b4fa%2F763872ed0a73419193efedc08b2ca7a5?format=webp&width=800&height=1200'
 
-const navItems = [
+const INBOX_COUNT = 3
+
+const railItems = [
   { label: 'Home', icon: 'home', active: true },
   { label: 'Me', icon: 'user' },
-  { label: 'Inbox', icon: 'inbox', badge: 3 },
-  { label: 'Team', icon: 'team' },
-  { label: 'Finances', icon: 'wallet' },
-  { label: 'Organisation', icon: 'building' },
+  { label: 'My Team', icon: 'team' },
+  { label: 'Org', icon: 'building' },
+  { label: 'Time', icon: 'clock' },
+  { label: 'Payroll', icon: 'wallet' },
+  { label: 'Timesheet', icon: 'calendar' },
+  { label: 'Performance', icon: 'chart' },
 ]
 
-const recentActions = ['Apply Leave', 'Add an Expense', 'View Pay Slips', 'Refer a Candidate']
+const subnavItems = ['Home', 'Inbox', 'Notifications', 'Activity', 'Events']
 
-const stats = [
-  { label: 'Pending tasks', value: '02', tone: 'blue', icon: 'clock' },
-  { label: 'Rejected expenses', value: '01', tone: 'red', icon: 'wallet' },
-  { label: 'Approved leave', value: '01', tone: 'green', icon: 'user' },
-  { label: 'Pending reviews', value: '04', tone: 'amber', icon: 'team' },
+const composerTabs = ['Post', 'Announcement', 'Poll', 'Praise']
+
+const todayCounts = [
+  { label: 'Birthdays', value: 8 },
+  { label: 'Work anniversaries', value: 2 },
+  { label: 'New joinees', value: 4 },
 ]
 
 const peers = [
@@ -84,23 +91,11 @@ const ICONS = {
       <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
     </>
   ),
-  inbox: (
-    <>
-      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
-      <path d="M5.5 5h13L22 12v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-7z" />
-    </>
-  ),
   team: (
     <>
       <circle cx="9" cy="8" r="3.5" />
       <path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5" />
       <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c2 .6 3.5 2.2 3.5 5.2" />
-    </>
-  ),
-  wallet: (
-    <>
-      <rect x="3" y="6" width="18" height="14" rx="2" />
-      <path d="M16 13h2M3 10h18" />
     </>
   ),
   building: (
@@ -109,8 +104,36 @@ const ICONS = {
       <path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-3h4v3" />
     </>
   ),
-  action: (
-    <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  wallet: (
+    <>
+      <rect x="3" y="6" width="18" height="14" rx="2" />
+      <path d="M16 13h2M3 10h18" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </>
+  ),
+  chart: <path d="M3 3v18h18M7 15l4-4 3 3 5-6" />,
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </>
+  ),
+  gear: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r="8.5" strokeDasharray="3 3" />
+    </>
   ),
   bell: (
     <>
@@ -118,22 +141,10 @@ const ICONS = {
       <path d="M10 21a2 2 0 0 0 4 0" />
     </>
   ),
-  search: (
-    <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.3-4.3" />
-    </>
-  ),
   logout: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="M16 17l5-5-5-5M21 12H9" />
-    </>
-  ),
-  help: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7M12 17h.01" />
     </>
   ),
 }
@@ -167,211 +178,245 @@ function useNow() {
   return now
 }
 
-export default function Dashboard({ user }) {
-  const now = useNow()
-  const [scope, setScope] = useState('Organisation')
-  const name = user.displayName || user.email.split('@')[0]
-  const initial = name.charAt(0).toUpperCase()
-  const visiblePosts = posts.filter((post) => post.scope === scope)
-  const hour = now.getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+function BalanceRing({ label, remaining, total }) {
+  const radius = 26
+  const circumference = 2 * Math.PI * radius
+  const fraction = Math.min(1, Math.max(0, remaining / total))
 
   return (
-    <div className="dash">
-      <aside className="dash-sidebar">
-        <div className="dash-brand">
-          <img src={ATV_MARK_URL} alt="ATV Technologies" />
-          <div className="dash-brand-text">
-            <strong>ATV Technologies</strong>
-            <span>HRMS</span>
-          </div>
-        </div>
-        <nav className="dash-nav">
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className={`dash-nav-item${item.active ? ' is-active' : ''}`}
-            >
-              <Icon name={item.icon} />
-              {item.label}
-              {item.badge && <span className="dash-badge">{item.badge}</span>}
-            </button>
-          ))}
-        </nav>
-        <div className="dash-recent">
-          <p className="dash-section-title">Recent actions</p>
-          {recentActions.map((action) => (
-            <button key={action} type="button" className="dash-nav-item">
-              <Icon name="action" />
-              {action}
-            </button>
-          ))}
-        </div>
-        <div className="dash-sidebar-foot">
-          <button type="button" className="dash-nav-item">
-            <Icon name="help" />
-            FAQs
-          </button>
-        </div>
-      </aside>
-
-      <div className="dash-main">
-        <header className="dash-topbar">
-          <label className="dash-search">
-            <Icon name="search" />
-            <input type="search" placeholder="Search employees, actions" />
-          </label>
-          <div className="dash-topbar-actions">
-            <button type="button" className="dash-icon-btn" aria-label="Notifications">
-              <Icon name="bell" />
-            </button>
-            <div className="dash-avatar" title={user.email}>
-              {initial}
-            </div>
-            <button
-              type="button"
-              className="dash-signout"
-              onClick={() => signOut(auth)}
-            >
-              <Icon name="logout" />
-              Sign out
-            </button>
-          </div>
-        </header>
-
-        <main className="dash-content">
-          <section className="dash-banner">
-            <p className="dash-banner-eyebrow">ATV Technologies</p>
-            <h3>Build. Innovate. Transform.</h3>
-            <p>Manage leave, expenses and your team from one place.</p>
-          </section>
-
-          <div className="dash-greeting">
-            <h2>
-              {greeting}, <span>{name}</span>
-            </h2>
-            <p>
-              {now.toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-
-          <div className="dash-stats">
-            {stats.map((stat) => (
-              <div key={stat.label} className={`dash-stat dash-stat-${stat.tone}`}>
-                <span className="dash-stat-icon">
-                  <Icon name={stat.icon} />
-                </span>
-                <span className="dash-stat-value">{stat.value}</span>
-                <span className="dash-stat-label">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="dash-columns">
-            <div className="dash-stack">
-              <section className="dash-card">
-                <h4 className="dash-card-title">Holidays</h4>
-                <p className="dash-holiday-name">Team Offsite Day</p>
-                <p>Friday, Mar 10</p>
-              </section>
-
-              <section className="dash-card">
-                <h4 className="dash-card-title">Time today</h4>
-                <p className="dash-clock">
-                  {now.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                  })}
-                </p>
-              </section>
-
-              <section className="dash-card">
-                <h4 className="dash-card-title">Peers</h4>
-                {peers.map((peer) => (
-                  <div key={peer.name} className="dash-peer">
-                    <div className="dash-peer-avatar">{peer.initials}</div>
-                    <div>
-                      <p className="dash-peer-name">{peer.name}</p>
-                      <p className="dash-peer-meta">{peer.role}</p>
-                      <p className="dash-peer-meta">{peer.location}</p>
-                    </div>
-                  </div>
-                ))}
-              </section>
-            </div>
-
-            <div className="dash-stack">
-              <section className="dash-card">
-                <div className="dash-scope-row">
-                  <span className="dash-card-title">Post to</span>
-                  <Scope scope={scope} onChange={setScope} />
-                </div>
-                <textarea placeholder="Write your post here..." rows={3} />
-              </section>
-
-              <section className="dash-card">
-                <div className="dash-scope-row">
-                  <h4 className="dash-card-title">Newsfeed</h4>
-                  <Scope scope={scope} onChange={setScope} />
-                </div>
-                {visiblePosts.length === 0 && (
-                  <p className="dash-empty">No posts in {scope} yet.</p>
-                )}
-                {visiblePosts.map((post) => (
-                  <article key={post.id} className="dash-post">
-                    <div className="dash-post-avatar">{post.initials}</div>
-                    <div className="dash-post-body-wrap">
-                      <p className="dash-post-meta">
-                        <strong>{post.from}</strong> praised <strong>{post.to}</strong> · {post.ago}
-                      </p>
-                      <div className="dash-post-body">
-                        <span className="dash-tag">{post.tag}</span>
-                        <p>{post.message}</p>
-                      </div>
-                      <p className="dash-post-meta">
-                        {post.likes} likes · {post.comments} comments
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </section>
-            </div>
-          </div>
-
-          <div className="hrms-grid">
-            <EmployeeSection />
-            <AttendanceSection />
-            <LeaveSection />
-            <PayrollSection />
-            <RecruitmentSection />
-            <PerformanceSection />
-          </div>
-        </main>
-      </div>
+    <div className="dash-ring">
+      <svg viewBox="0 0 64 64" width="72" height="72" aria-hidden="true">
+        <circle className="dash-ring-track" cx="32" cy="32" r={radius} />
+        <circle
+          className="dash-ring-fill"
+          cx="32"
+          cy="32"
+          r={radius}
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - fraction)}
+          transform="rotate(-90 32 32)"
+        />
+        <text className="dash-ring-text" x="32" y="37" textAnchor="middle">
+          {remaining}
+        </text>
+      </svg>
+      <span className="dash-ring-label">{label}</span>
     </div>
   )
 }
 
-function Scope({ scope, onChange }) {
+export default function Dashboard({ user }) {
+  const now = useNow()
+  const [scope, setScope] = useState('Organisation')
+  const [activeSubnav, setActiveSubnav] = useState('Home')
+  const [composerTab, setComposerTab] = useState('Post')
+  const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests)
+
+  const name = user.displayName || user.email.split('@')[0]
+  const initial = name.charAt(0).toUpperCase()
+  const visiblePosts = posts.filter((post) => post.scope === scope)
+  const balances = getLeaveBalances(leaveRequests)
+  const nextHoliday = holidays[0]
+  const clock = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const todayLabel = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
   return (
-    <div className="dash-tabs">
-      {['Organisation', 'Marketing'].map((option) => (
-        <button
-          key={option}
-          type="button"
-          className={`dash-tab${scope === option ? ' is-active' : ''}`}
-          aria-pressed={scope === option}
-          onClick={() => onChange(option)}
-        >
-          {option}
-        </button>
-      ))}
+    <div className="dash">
+      <div className="dash-brandcell">
+        <img src={ATV_MARK_URL} alt="ATV Technologies" />
+      </div>
+
+      <header className="dash-topbar">
+        <label className="dash-search">
+          <Icon name="search" />
+          <input type="search" placeholder="Search employees, actions" />
+        </label>
+        <div className="dash-topbar-actions">
+          <button type="button" className="dash-icon-btn" aria-label="Settings">
+            <Icon name="gear" />
+          </button>
+          <button type="button" className="dash-icon-btn" aria-label="Notifications">
+            <Icon name="bell" />
+          </button>
+          <div className="dash-user">
+            <span className="dash-avatar">{initial}</span>
+            <span>{name}</span>
+          </div>
+          <button type="button" className="dash-signout" onClick={() => signOut(auth)}>
+            <Icon name="logout" />
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      <nav className="dash-rail">
+        {railItems.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            className={item.active ? 'dash-rail-item is-active' : 'dash-rail-item'}
+          >
+            <Icon name={item.icon} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <nav className="dash-subnav">
+        {subnavItems.map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={activeSubnav === item ? 'dash-subnav-item is-active' : 'dash-subnav-item'}
+            onClick={() => setActiveSubnav(item)}
+          >
+            {item}
+            {item === 'Inbox' && <span className="dash-count">{INBOX_COUNT}</span>}
+          </button>
+        ))}
+      </nav>
+
+      <main className="dash-content">
+        <div className="dash-columns">
+          <div className="dash-stack">
+            <section className="dash-holiday">
+              <p className="dash-holiday-label">Holidays</p>
+              <h3>{nextHoliday.name}</h3>
+              <p>{formatDate(nextHoliday.date)}</p>
+            </section>
+
+            <section className="dash-card">
+              <h4 className="dash-card-title">Time today · {todayLabel}</h4>
+              <span className="dash-muted-label">Clocked time</span>
+              <p className="dash-clock">{clock}</p>
+            </section>
+
+            <section className="dash-card">
+              <h4 className="dash-card-title">Leave balances</h4>
+              <div className="dash-rings">
+                {balances.map((balance) => (
+                  <BalanceRing
+                    key={balance.type}
+                    label={balance.type.replace(' leave', '')}
+                    remaining={balance.total - balance.used}
+                    total={balance.total}
+                  />
+                ))}
+              </div>
+              <div className="dash-links">
+                <a href="#hrms-modules">Apply leave</a>
+                <a href="#hrms-modules">View all balances</a>
+              </div>
+            </section>
+
+            <section className="dash-card">
+              <h4 className="dash-card-title">Inbox</h4>
+              <div className="dash-inbox-row">
+                <span className="dash-inbox-count">{INBOX_COUNT}</span>
+                <p>Tasks waiting for you, including leave approvals and expense claims.</p>
+              </div>
+              <a className="dash-action" href="#hrms-modules">
+                Take action
+              </a>
+            </section>
+
+            <section className="dash-card">
+              <h4 className="dash-card-title">Peers</h4>
+              {peers.map((peer) => (
+                <div key={peer.name} className="dash-peer">
+                  <span className="dash-peer-avatar">{peer.initials}</span>
+                  <div>
+                    <p className="dash-peer-name">{peer.name}</p>
+                    <p className="dash-peer-meta">{peer.role}</p>
+                    <p className="dash-peer-meta">{peer.location}</p>
+                  </div>
+                </div>
+              ))}
+            </section>
+          </div>
+
+          <div className="dash-stack">
+            <div className="dash-tabs">
+              {['Organisation', 'Marketing'].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={scope === option ? 'dash-tab is-active' : 'dash-tab'}
+                  aria-pressed={scope === option}
+                  onClick={() => setScope(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+
+            <section className="dash-card dash-composer">
+              <div className="dash-composer-tabs">
+                {composerTabs.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={composerTab === tab ? 'dash-composer-tab is-active' : 'dash-composer-tab'}
+                    onClick={() => setComposerTab(tab)}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <textarea placeholder="Write your post here..." rows={3} />
+            </section>
+
+            <section className="dash-card dash-today">
+              <span className="dash-card-title">Today</span>
+              {todayCounts.map((item) => (
+                <span key={item.label} className="dash-today-item">
+                  {item.label} <strong>{item.value}</strong>
+                </span>
+              ))}
+            </section>
+
+            {visiblePosts.length === 0 && <p className="dash-empty">No posts in {scope} yet.</p>}
+            {visiblePosts.map((post) => (
+              <article key={post.id} className="dash-card dash-post">
+                <div className="dash-post-head">
+                  <span className="dash-post-avatar">{post.initials}</span>
+                  <div>
+                    <p>
+                      <strong>{post.from}</strong> praised <strong>{post.to}</strong>
+                    </p>
+                    <p className="dash-post-meta">{post.ago}</p>
+                  </div>
+                </div>
+                <div className="dash-post-body">
+                  <span className="dash-tag">{post.tag}</span>
+                  <p>{post.message}</p>
+                </div>
+                <div className="dash-post-foot">
+                  <span>{post.likes} likes</span>
+                  <span>{post.comments} comments</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div id="hrms-modules" className="hrms-grid">
+          <EmployeeSection />
+          <AttendanceSection />
+          <LeaveSection requests={leaveRequests} setRequests={setLeaveRequests} />
+          <PayrollSection />
+          <RecruitmentSection />
+          <PerformanceSection />
+        </div>
+      </main>
     </div>
   )
 }

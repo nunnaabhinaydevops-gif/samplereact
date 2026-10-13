@@ -1,3 +1,5 @@
+import { countDays } from './format'
+
 export const workforce = { total: 128, active: 121, inactive: 7 }
 
 export const departments = [
@@ -234,3 +236,16 @@ export const attendanceTrend = [
 ]
 
 export const leaversLast12Months = 5
+
+export function getLeaveBalances(requests) {
+  return leaveBalances.map((balance) => {
+    const approvedDays = requests
+      .filter(
+        (request) =>
+          request.employee === 'You' && request.type === balance.type && request.status === 'Approved',
+      )
+      .reduce((sum, request) => sum + countDays(request.from, request.to), 0)
+    const used = balance.used + approvedDays
+    return { ...balance, used, percent: (used / balance.total) * 100 }
+  })
+}
