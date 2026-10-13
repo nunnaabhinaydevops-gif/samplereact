@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasProfile() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActive() {
+      return hasProfile() && profile().active == true;
+    }
+
+    function isSuperAdmin() {
+      return isActive() && profile().role == 'SUPER_ADMIN';
+    }
+
+    function isHrAdmin() {
+      return isActive() && profile().role in ['SUPER_ADMIN', 'HR_ADMIN'];
+    }
+
+    function isManager() {
+      return isActive() && profile().role == 'MANAGER';
+    }
+
+    match /users/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isHrAdmin());
+      allow list: if isHrAdmin();
+      allow create: if isSuperAdmin()
+        || (isHrAdmin() && request.resource.data.role != 'SUPER_ADMIN');
+      allow update: if isSuperAdmin()
+        || (isHrAdmin()
+          && resource.data.role != 'SUPER_ADMIN'
+          && request.resource.data.role != 'SUPER_ADMIN');
+      allow delete: if isSuperAdmin();
+    }
+
+    match /employees/{employeeId} {
+      allow get: if isHrAdmin()
+        || (isManager() && resource.data.reportingManagerUid == request.auth.uid)
+        || (isActive() && resource.data.userId == request.auth.uid);
+      allow list: if isHrAdmin()
+        || (isManager() && resource.data.reportingManagerUid == request.auth.uid);
+      allow create, update, delete: if isHrAdmin();
+    }
+  }
+}

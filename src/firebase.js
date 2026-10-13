@@ -1,17 +1,25 @@
 import { initializeApp } from 'firebase/app'
-import { getAnalytics } from 'firebase/analytics'
+import { getAnalytics, isSupported } from 'firebase/analytics'
 import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyArHvfo1j-hP-1W2N2JtkBY_63KTRh0uKk',
-  authDomain: 'abhinay-89a72.firebaseapp.com',
-  projectId: 'abhinay-89a72',
-  storageBucket: 'abhinay-89a72.firebasestorage.app',
-  messagingSenderId: '173011791248',
-  appId: '1:173011791248:web:f3abb0a68adf260521d715',
-  measurementId: 'G-NR4K7X573V',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
 const app = initializeApp(firebaseConfig)
+
 export const auth = getAuth(app)
-export const analytics = getAnalytics(app)
+export const db = getFirestore(app)
+export const storage = getStorage(app)
+
+isSupported().then((supported) => {
+  if (supported) getAnalytics(app)
+})
