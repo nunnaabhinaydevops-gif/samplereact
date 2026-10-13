@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from './firebase'
 import atvLogo from './assets/atv-logo.webp'
+import AttendanceSection from './hrms/AttendanceSection.jsx'
+import EmployeeSection from './hrms/EmployeeSection.jsx'
+import LeaveSection from './hrms/LeaveSection.jsx'
+import PayrollSection from './hrms/PayrollSection.jsx'
+import PerformanceSection from './hrms/PerformanceSection.jsx'
+import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import './Dashboard.css'
+import './hrms/hrms.css'
 
 const navItems = [
   { label: 'Home', icon: 'home', active: true },
@@ -324,6 +331,15 @@ export default function Dashboard({ user }) {
                 ))}
               </section>
             </div>
+          </div>
+
+          <div className="hrms-grid">
+            <EmployeeSection />
+            <AttendanceSection />
+            <LeaveSection />
+            <PayrollSection />
+            <RecruitmentSection />
+            <PerformanceSection />
           </div>
         </main>
       </div>
