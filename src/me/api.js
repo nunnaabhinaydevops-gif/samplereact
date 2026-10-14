@@ -82,6 +82,10 @@ export function correctAttendance(payload) {
   return callFunction('correctAttendance', payload)
 }
 
+export function createStaff(values) {
+  return callFunction('createStaff', values)
+}
+
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
