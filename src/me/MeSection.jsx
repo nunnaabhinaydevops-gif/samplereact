@@ -16,8 +16,9 @@ const TABS = [
   { id: 'documents', label: 'Documents' },
 ]
 
-function byName(a, b) {
-  return (a.fullName || a.id).localeCompare(b.fullName || b.id)
+function nameOf(person, viewer) {
+  const self = person.id === viewer.uid ? viewer : {}
+  return person.fullName || self.displayName || person.email || self.email || person.id
 }
 
 export default function MeSection({ user }) {
@@ -93,11 +94,14 @@ export default function MeSection({ user }) {
             HR · Manage employee
             <select value={managedId} onChange={(event) => setManagedId(event.target.value)}>
               <option value="">Select an employee</option>
-              {[...directory.items].sort(byName).map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.fullName || person.id} · {person.employeeId || 'no employee ID'}
-                </option>
-              ))}
+              {[...directory.items]
+                .sort((a, b) => nameOf(a, user).localeCompare(nameOf(b, user)))
+                .map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {nameOf(person, user)}
+                    {person.employeeId ? ` · ${person.employeeId}` : ''}
+                  </option>
+                ))}
             </select>
           </label>
           {directory.status === 'error' && (
@@ -110,21 +114,24 @@ export default function MeSection({ user }) {
 
       {tab === 'overview' && (
         <div className="me-grid">
+          {managed && (
+            <>
+              <EmployeeProfile key={managed.id} user={managed} profile={managed} readOnly />
+              <div className="me-wide">
+                <EmploymentDetails
+                  key={managed.id}
+                  profile={managed}
+                  editable
+                  canEditRole={profile.role === 'SUPER_ADMIN'}
+                />
+              </div>
+            </>
+          )}
           <EmployeeProfile user={user} profile={profile} />
           <EmploymentDetails profile={profile} editable={false} canEditRole={false} />
           <div className="me-wide">
             <Celebrations profile={profile} isHr={isHr} />
           </div>
-          {managed && (
-            <div className="me-wide">
-              <EmploymentDetails
-                key={managed.id}
-                profile={managed}
-                editable
-                canEditRole={profile.role === 'SUPER_ADMIN'}
-              />
-            </div>
-          )}
         </div>
       )}
 

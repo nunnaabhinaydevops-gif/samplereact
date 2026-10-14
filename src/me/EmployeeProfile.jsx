@@ -18,7 +18,7 @@ function initialsOf(name) {
   )
 }
 
-export default function EmployeeProfile({ user, profile }) {
+export default function EmployeeProfile({ user, profile, readOnly = false }) {
   const photoUrl = usePhotoUrl(profile.photoPath)
   const fullName = profile.fullName || user.displayName || user.email
   const [editing, setEditing] = useState(false)
@@ -80,21 +80,25 @@ export default function EmployeeProfile({ user, profile }) {
               {initialsOf(fullName)}
             </span>
           )}
-          <button
-            type="button"
-            className="me-link-btn"
-            onClick={() => fileInput.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? 'Uploading…' : 'Change photo'}
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept={PHOTO_TYPES.join(',')}
-            onChange={handlePhoto}
-            hidden
-          />
+          {!readOnly && (
+            <>
+              <button
+                type="button"
+                className="me-link-btn"
+                onClick={() => fileInput.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading…' : 'Change photo'}
+              </button>
+              <input
+                ref={fileInput}
+                type="file"
+                accept={PHOTO_TYPES.join(',')}
+                onChange={handlePhoto}
+                hidden
+              />
+            </>
+          )}
         </div>
         <div className="me-profile-title">
           <h2>{fullName}</h2>
@@ -115,7 +119,7 @@ export default function EmployeeProfile({ user, profile }) {
 
       <div className="me-section-head">
         <h3>Personal details</h3>
-        {!editing && (
+        {!editing && !readOnly && (
           <button type="button" className="hrms-btn-ghost" onClick={startEditing}>
             Edit phone and address
           </button>
