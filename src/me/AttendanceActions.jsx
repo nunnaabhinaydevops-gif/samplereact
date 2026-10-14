@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Kpi } from '../hrms/ui'
 import { punchIn, punchOut } from './api'
+import { WORK_LOCATIONS, workLocationLabel } from './constants'
 import { useAttendanceRange, useNow } from './hooks'
 import { formatIstClock, formatIstLongDate, formatIstTime, formatMinutes, shiftDateKey, toIstDateKey } from './time'
 
@@ -11,10 +12,12 @@ export default function AttendanceActions({ uid, policy }) {
   const attendance = useAttendanceRange(uid, yesterdayKey, todayKey)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState({ tone: '', message: '' })
+  const [workLocation, setWorkLocation] = useState('OFFICE')
   const busyRef = useRef(false)
 
   const todayRecord = attendance.records.find((record) => record.date === todayKey) ?? null
   const openRecord = attendance.records.find((record) => record.punchIn && !record.punchOut) ?? null
+  const punchedRecord = openRecord ?? (todayRecord?.punchIn ? todayRecord : null)
   const policyReady = policy.status === 'ready'
 
   let workedMinutes = null
@@ -47,8 +50,10 @@ export default function AttendanceActions({ uid, policy }) {
   }
 
   function handlePunchIn() {
-    return run(punchIn, (result) =>
-      `Punched in at ${formatIstTime(new Date(result.punchIn))}${result.isLate ? ' · marked as late' : ''}.`,
+    return run(
+      () => punchIn(workLocation),
+      (result) =>
+        `Punched in at ${formatIstTime(new Date(result.punchIn))} from ${workLocationLabel(result.workLocation)}${result.isLate ? ' · marked as late' : ''}.`,
     )
   }
 
@@ -71,6 +76,7 @@ export default function AttendanceActions({ uid, policy }) {
       <p className="me-status">
         <span className={`me-status-dot ${openRecord ? 'is-live' : ''}`} aria-hidden="true" />
         {statusText}
+        {punchedRecord && <span className="hrms-muted"> · {workLocationLabel(punchedRecord.workLocation)}</span>}
       </p>
 
       {policy.status === 'missing' && (
@@ -108,6 +114,17 @@ export default function AttendanceActions({ uid, policy }) {
           tone="amber"
         />
       </div>
+
+      <label className="hrms-field">
+        Work location for this punch
+        <select value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} disabled={punchInDisabled}>
+          {WORK_LOCATIONS.map((location) => (
+            <option key={location.value} value={location.value}>
+              {location.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div className="me-actions">
         <button type="button" className="hrms-btn" onClick={handlePunchIn} disabled={punchInDisabled}>

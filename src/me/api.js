@@ -70,8 +70,8 @@ export async function uploadProfilePhoto(uid, file, previousPath) {
   if (previousPath) await deleteObject(ref(storage, previousPath)).catch(() => {})
 }
 
-export function punchIn() {
-  return callFunction('punchIn')
+export function punchIn(workLocation = 'OFFICE') {
+  return callFunction('punchIn', { workLocation })
 }
 
 export function punchOut() {

@@ -7,6 +7,7 @@ const app = initializeApp()
 const db = getFirestore(app, 'hrms-attendance')
 
 const HR_ROLES = ['SUPER_ADMIN', 'HR']
+const WORK_LOCATIONS = ['OFFICE', 'REMOTE']
 const IST_OFFSET_MS = 330 * 60 * 1000
 const MAX_OFFER_BYTES = 3 * 1024 * 1024
 const CORRECTION_STATUSES = ['present', 'leave', 'absent']
@@ -112,6 +113,8 @@ function parseOptionalTime(value, label) {
 
 exports.punchIn = onCall(async (request) => {
   const uid = requireSignedIn(request)
+  const workLocation = request.data?.workLocation
+  if (!WORK_LOCATIONS.includes(workLocation)) throw invalid('Choose Office or Remote as your work location.')
   const policy = await loadPolicy()
   const now = new Date()
   const today = istDateKey(now)
@@ -143,13 +146,14 @@ exports.punchIn = onCall(async (request) => {
       punchOut: null,
       isLate,
       lateMinutes,
+      workLocation,
       workedMinutes: null,
       correction: null,
       updatedAt: FieldValue.serverTimestamp(),
     })
   })
 
-  return { date: today, punchIn: now.toISOString(), isLate }
+  return { date: today, punchIn: now.toISOString(), isLate, workLocation }
 })
 
 exports.punchOut = onCall(async (request) => {

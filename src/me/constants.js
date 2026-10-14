@@ -10,6 +10,15 @@ export const OFFER_TEMPLATES = [
   { key: 'internship', label: 'Internship', employmentType: 'Intern' },
 ]
 
+export const WORK_LOCATIONS = [
+  { value: 'OFFICE', label: 'Office' },
+  { value: 'REMOTE', label: 'Remote' },
+]
+
+export function workLocationLabel(value) {
+  return WORK_LOCATIONS.find((location) => location.value === value)?.label ?? value
+}
+
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024
 export const MAX_OFFER_BYTES = 3 * 1024 * 1024
 export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']

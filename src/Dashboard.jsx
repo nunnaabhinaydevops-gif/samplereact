@@ -417,7 +417,7 @@ export default function Dashboard({ user }) {
 
             <div id="hrms-modules" className="hrms-grid">
               <EmployeeSection />
-              <AttendanceSection />
+              <AttendanceSection user={user} />
               <LeaveSection requests={leaveRequests} setRequests={setLeaveRequests} />
               <PayrollSection />
               <RecruitmentSection />

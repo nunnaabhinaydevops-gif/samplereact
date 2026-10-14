@@ -85,41 +85,6 @@ export const employees = [
   },
 ]
 
-export const attendanceToday = { present: 100, late: 11, halfDay: 4, absent: 6 }
-
-export const regularizationRequests = [
-  { id: 1, date: '2026-10-09', reason: 'Forgot to check out', status: 'Pending' },
-  { id: 2, date: '2026-10-06', reason: 'Biometric device was offline', status: 'Approved' },
-]
-
-const attendancePattern = [
-  'present',
-  'present',
-  'late',
-  'present',
-  'present',
-  'absent',
-  'present',
-  'half-day',
-  'present',
-  'present',
-]
-
-export function buildMonthAttendance(today) {
-  const year = today.getFullYear()
-  const month = today.getMonth()
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-
-  return Array.from({ length: daysInMonth }, (_, index) => {
-    const day = index + 1
-    const weekday = new Date(year, month, day).getDay()
-
-    if (day > today.getDate()) return { day, status: 'upcoming' }
-    if (weekday === 0 || weekday === 6) return { day, status: 'weekend' }
-    return { day, status: attendancePattern[index % attendancePattern.length] }
-  })
-}
-
 export const leaveTypes = ['Casual leave', 'Sick leave', 'Earned leave']
 
 export const leaveBalances = [
