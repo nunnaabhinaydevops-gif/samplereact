@@ -1,0 +1,52 @@
+.team-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.team-search {
+  display: flex;
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.team-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.team-form {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6e9f0;
+}
+
+.team-link {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.team-link input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

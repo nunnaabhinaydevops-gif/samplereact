@@ -2,11 +2,17 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https')
 const { initializeApp } = require('firebase-admin/app')
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore')
 const { getStorage } = require('firebase-admin/storage')
+const { getAuth } = require('firebase-admin/auth')
 
 const app = initializeApp()
 const db = getFirestore(app, 'hrms-attendance')
 
 const HR_ROLES = ['SUPER_ADMIN', 'HR']
+const WORK_LOCATIONS = ['OFFICE', 'REMOTE']
+const EMPLOYMENT_TYPES = ['Full-time', 'Contract', 'Intern']
+const EMPLOYMENT_STATUSES = ['Probation', 'Active', 'Inactive']
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const E164_PHONE = /^\+[1-9]\d{7,14}$/
 const IST_OFFSET_MS = 330 * 60 * 1000
 const MAX_OFFER_BYTES = 3 * 1024 * 1024
 const CORRECTION_STATUSES = ['present', 'leave', 'absent']
@@ -112,8 +118,8 @@ function parseOptionalTime(value, label) {
 
 exports.punchIn = onCall(async (request) => {
   const uid = requireSignedIn(request)
-  const workLocation = request.data?.workLocation ?? 'OFFICE'
-  if (!['OFFICE', 'REMOTE'].includes(workLocation)) throw invalid('Choose Office or Remote as your work location.')
+  const workLocation = request.data?.workLocation
+  if (!WORK_LOCATIONS.includes(workLocation)) throw invalid('Choose Office or Remote as your work location.')
   const policy = await loadPolicy()
   const now = new Date()
   const today = istDateKey(now)
@@ -146,13 +152,14 @@ exports.punchIn = onCall(async (request) => {
       punchOut: null,
       isLate,
       lateMinutes,
+      workLocation,
       workedMinutes: null,
       correction: null,
       updatedAt: FieldValue.serverTimestamp(),
     })
   })
 
-  return { date: today, punchIn: now.toISOString(), isLate }
+  return { date: today, punchIn: now.toISOString(), isLate, workLocation }
 })
 
 exports.punchOut = onCall(async (request) => {
@@ -226,6 +233,89 @@ exports.correctAttendance = onCall(async (request) => {
   )
 
   return { employeeUid, date, status }
+})
+
+function optionalText(value, label, max) {
+  const text = typeof value === 'string' ? value.trim() : ''
+  if (text.length > max) throw invalid(`${label} must be ${max} characters or fewer.`)
+  return text
+}
+
+function requiredText(value, label, max) {
+  const text = optionalText(value, label, max)
+  if (!text) throw invalid(`${label} is required.`)
+  return text
+}
+
+exports.createStaff = onCall(async (request) => {
+  const hrUid = await requireHr(request)
+  const values = request.data ?? {}
+
+  const email = requiredText(values.email, 'Work email', 120).toLowerCase()
+  if (!EMAIL.test(email)) throw invalid('Enter a valid work email.')
+  const phone = requiredText(values.phone, 'Mobile number', 20).replace(/[\s()-]/g, '')
+  if (!E164_PHONE.test(phone)) throw invalid('Enter the mobile number with its country code, such as +919876543210.')
+  const fullName = requiredText(values.fullName, 'Full name', 80)
+  const employeeId = requiredText(values.employeeId, 'Employee ID', 30)
+  const department = requiredText(values.department, 'Department', 80)
+  const designation = requiredText(values.designation, 'Designation', 80)
+  const reportingManager = optionalText(values.reportingManager, 'Reporting manager', 80)
+  const workLocation = requiredText(values.workLocation, 'Work location', 80)
+  if (typeof values.dateOfJoining !== 'string' || !DATE_KEY.test(values.dateOfJoining)) {
+    throw invalid('Choose a valid joining date.')
+  }
+  if (!EMPLOYMENT_TYPES.includes(values.employmentType)) throw invalid('Choose a valid employment type.')
+  if (!EMPLOYMENT_STATUSES.includes(values.employmentStatus)) throw invalid('Choose a valid employment status.')
+
+  const duplicate = await db.collection('users').where('employeeId', '==', employeeId).limit(1).get()
+  if (!duplicate.empty) throw new HttpsError('already-exists', `Employee ID ${employeeId} is already in use.`)
+
+  const auth = getAuth(app)
+  let account
+  try {
+    account = await auth.createUser({
+      email,
+      displayName: fullName,
+      multiFactor: { enrolledFactors: [{ phoneNumber: phone, displayName: 'Mobile' }] },
+    })
+  } catch (error) {
+    if (error.code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'An account with this email already exists.')
+    }
+    if (error.code === 'auth/phone-number-already-exists') {
+      throw new HttpsError('already-exists', 'This mobile number is already registered to another account.')
+    }
+    console.error('createStaff: creating auth account failed', error)
+    throw new HttpsError('internal', `Could not create the sign-in account: ${error.code ?? ''} ${error.message}`.trim())
+  }
+
+  try {
+    const setupLink = await auth.generatePasswordResetLink(email)
+    await db.doc(`users/${account.uid}`).set({
+      fullName,
+      employeeId,
+      email,
+      birthday: null,
+      dateOfJoining: values.dateOfJoining,
+      department,
+      designation,
+      reportingManager,
+      workLocation,
+      employmentType: values.employmentType,
+      employmentStatus: values.employmentStatus,
+      role: 'EMPLOYEE',
+      phone,
+      address: '',
+      photoPath: null,
+      createdBy: hrUid,
+      createdAt: FieldValue.serverTimestamp(),
+    })
+    return { uid: account.uid, setupLink }
+  } catch (error) {
+    await auth.deleteUser(account.uid).catch(() => {})
+    console.error('createStaff: saving staff profile failed', error)
+    throw new HttpsError('internal', `Could not save the staff profile: ${error.message}`)
+  }
 })
 
 exports.uploadOfferLetter = onCall(async (request) => {

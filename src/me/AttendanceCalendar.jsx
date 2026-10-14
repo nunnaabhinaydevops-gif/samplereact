@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Chip, Kpi } from '../hrms/ui'
 import { DAY_STATUS, deriveDayStatus } from './attendanceStatus'
+import { workLocationLabel } from './constants'
 import { useAttendanceRange, useNow } from './hooks'
 import {
   daysInMonthKey,
@@ -139,7 +140,7 @@ export default function AttendanceCalendar({ uid, policy }) {
               <div>
                 <strong>{formatDateKey(record.date)}</strong>
                 <span className="hrms-muted">
-                  {record.punchIn ? `In ${formatIstTime(record.punchIn)}` : 'No punch-in'}
+                  {record.punchIn ? `In ${formatIstTime(record.punchIn)} · ${workLocationLabel(record.workLocation)}` : 'No punch-in'}
                   {' · '}
                   {record.punchOut ? `Out ${formatIstTime(record.punchOut)}` : 'No punch-out'}
                   {record.workedMinutes != null && ` · ${formatMinutes(record.workedMinutes)}`}

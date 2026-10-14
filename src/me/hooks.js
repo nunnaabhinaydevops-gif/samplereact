@@ -17,6 +17,7 @@ function toAttendanceRecord(snap) {
     punchIn: data.punchIn?.toDate() ?? null,
     punchOut: data.punchOut?.toDate() ?? null,
     isLate: Boolean(data.isLate),
+    workLocation: data.workLocation ?? 'OFFICE',
     workedMinutes: data.workedMinutes ?? null,
     correctionReason: data.correction?.reason ?? null,
   }

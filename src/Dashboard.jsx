@@ -8,6 +8,7 @@ import PayrollSection from './hrms/PayrollSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
+import StaffList from './team/StaffList.jsx'
 import { formatDate } from './hrms/format.js'
 import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
 import './Dashboard.css'
@@ -21,7 +22,7 @@ const INBOX_COUNT = 3
 const railItems = [
   { label: 'Home', icon: 'home', view: 'home' },
   { label: 'Me', icon: 'user', view: 'me' },
-  { label: 'My Team', icon: 'team' },
+  { label: 'My Team', icon: 'team', view: 'team' },
   { label: 'Org', icon: 'building' },
   { label: 'Time', icon: 'clock' },
   { label: 'Payroll', icon: 'wallet' },
@@ -290,6 +291,8 @@ export default function Dashboard({ user }) {
       <main className="dash-content">
         {view === 'me' ? (
           <MeSection user={user} />
+        ) : view === 'team' ? (
+          <StaffList user={user} />
         ) : (
           <>
             <div className="dash-columns">

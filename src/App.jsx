@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   createUserWithEmailAndPassword,
+  getMultiFactorResolver,
   onAuthStateChanged,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+  RecaptchaVerifier,
   signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth'
-import { auth } from './firebase'
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { auth, db } from './firebase'
 import atvLogo from './assets/atv-logo.webp'
 import Dashboard from './Dashboard.jsx'
 import './App.css'
@@ -26,13 +32,26 @@ function AuthLayout({ children }) {
 
 function App() {
   const [mode, setMode] = useState('login')
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState(undefined)
+  const [mfa, setMfa] = useState(null)
+  const [code, setCode] = useState('')
+  const recaptchaRef = useRef(null)
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
+
+  async function sendSignInCode(resolver) {
+    recaptchaRef.current?.clear()
+    recaptchaRef.current = new RecaptchaVerifier(auth, 'mfa-recaptcha', { size: 'invisible' })
+    return new PhoneAuthProvider(auth).verifyPhoneNumber(
+      { multiFactorHint: resolver.hints[0], session: resolver.session },
+      recaptchaRef.current,
+    )
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -40,16 +59,56 @@ function App() {
     setSubmitting(true)
     try {
       if (mode === 'signup') {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const account = await createUserWithEmailAndPassword(auth, email, password)
+        const name = fullName.trim()
+        await updateProfile(account.user, { displayName: name })
+        await setDoc(doc(db, 'users', account.user.uid), {
+          fullName: name,
+          email: account.user.email,
+          createdAt: serverTimestamp(),
+        })
+        setFullName('')
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
+      setPassword('')
+    } catch (err) {
+      if (err.code === 'auth/multi-factor-auth-required') {
+        const resolver = getMultiFactorResolver(auth, err)
+        try {
+          setMfa({ resolver, verificationId: await sendSignInCode(resolver) })
+        } catch (codeError) {
+          setError(codeError.message)
+        }
+      } else {
+        setError(err.message)
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleCodeSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      const credential = PhoneAuthProvider.credential(mfa.verificationId, code)
+      await mfa.resolver.resolveSignIn(PhoneMultiFactorGenerator.assertion(credential))
+      setMfa(null)
+      setCode('')
       setPassword('')
     } catch (err) {
       setError(err.message)
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function cancelCodeStep() {
+    setMfa(null)
+    setCode('')
+    setError('')
   }
 
   if (user === undefined) {
@@ -62,8 +121,43 @@ function App() {
 
   const isSignup = mode === 'signup'
 
+  if (mfa) {
+    return (
+      <AuthLayout>
+        <div id="mfa-recaptcha" />
+        <div className="auth-panel-header">
+          <h1>Enter your code</h1>
+          <p className="auth-subtitle">We sent a 6-digit code to {mfa.resolver.hints[0].phoneNumber}.</p>
+        </div>
+        <div className="auth-panel-body">
+          <form onSubmit={handleCodeSubmit}>
+            <label>
+              Verification code
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+              />
+            </label>
+            {error && <p className="auth-error">{error}</p>}
+            <button type="submit" disabled={submitting}>
+              Verify and log in
+            </button>
+          </form>
+          <button type="button" className="auth-switch" onClick={cancelCodeStep}>
+            Back to log in
+          </button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout>
+      <div id="mfa-recaptcha" />
       <div className="auth-panel-header">
         <h1>{isSignup ? 'Create account' : 'Log in'}</h1>
         <p className="auth-subtitle">
@@ -74,6 +168,18 @@ function App() {
       </div>
       <div className="auth-panel-body">
         <form onSubmit={handleSubmit}>
+          {isSignup && (
+            <label>
+              Full name
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                required
+              />
+            </label>
+          )}
           <label>
             Email
             <input
