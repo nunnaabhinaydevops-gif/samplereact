@@ -7,8 +7,10 @@ import {
   PhoneMultiFactorGenerator,
   RecaptchaVerifier,
   signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth'
-import { auth } from './firebase'
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { auth, db } from './firebase'
 import atvLogo from './assets/atv-logo.webp'
 import Dashboard from './Dashboard.jsx'
 import './App.css'
@@ -30,6 +32,7 @@ function AuthLayout({ children }) {
 
 function App() {
   const [mode, setMode] = useState('login')
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -56,7 +59,15 @@ function App() {
     setSubmitting(true)
     try {
       if (mode === 'signup') {
-        await createUserWithEmailAndPassword(auth, email, password)
+        const account = await createUserWithEmailAndPassword(auth, email, password)
+        const name = fullName.trim()
+        await updateProfile(account.user, { displayName: name })
+        await setDoc(doc(db, 'users', account.user.uid), {
+          fullName: name,
+          email: account.user.email,
+          createdAt: serverTimestamp(),
+        })
+        setFullName('')
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
@@ -157,6 +168,18 @@ function App() {
       </div>
       <div className="auth-panel-body">
         <form onSubmit={handleSubmit}>
+          {isSignup && (
+            <label>
+              Full name
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                required
+              />
+            </label>
+          )}
           <label>
             Email
             <input
