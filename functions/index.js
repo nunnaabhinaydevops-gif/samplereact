@@ -118,7 +118,7 @@ function parseOptionalTime(value, label) {
 
 exports.punchIn = onCall(async (request) => {
   const uid = requireSignedIn(request)
-  const workLocation = request.data?.workLocation
+  const workLocation = request.data?.workLocation ?? 'OFFICE'
   if (!WORK_LOCATIONS.includes(workLocation)) throw invalid('Choose Office or Remote as your work location.')
   const policy = await loadPolicy()
   const now = new Date()
@@ -147,11 +147,11 @@ exports.punchIn = onCall(async (request) => {
       uid,
       date: today,
       status: 'present',
+      workLocation,
       punchIn: Timestamp.fromDate(now),
       punchOut: null,
       isLate,
       lateMinutes,
-      workLocation,
       workedMinutes: null,
       correction: null,
       updatedAt: FieldValue.serverTimestamp(),
