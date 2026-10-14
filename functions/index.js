@@ -284,7 +284,8 @@ exports.createStaff = onCall(async (request) => {
     if (error.code === 'auth/phone-number-already-exists') {
       throw new HttpsError('already-exists', 'This mobile number is already registered to another account.')
     }
-    throw error
+    console.error('createStaff: creating auth account failed', error)
+    throw new HttpsError('internal', `Could not create the sign-in account: ${error.code ?? ''} ${error.message}`.trim())
   }
 
   try {
@@ -311,7 +312,8 @@ exports.createStaff = onCall(async (request) => {
     return { uid: account.uid, setupLink }
   } catch (error) {
     await auth.deleteUser(account.uid).catch(() => {})
-    throw error
+    console.error('createStaff: saving staff profile failed', error)
+    throw new HttpsError('internal', `Could not save the staff profile: ${error.message}`)
   }
 })
 
