@@ -127,6 +127,13 @@ export default function AttendanceActions({ uid, policy }) {
       </label>
 
       <div className="me-actions">
+        <label className="hrms-field">
+          Work location
+          <select value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} disabled={punchInDisabled}>
+            <option value="OFFICE">Office · Clock in</option>
+            <option value="REMOTE">Remote · Clock in</option>
+          </select>
+        </label>
         <button type="button" className="hrms-btn" onClick={handlePunchIn} disabled={punchInDisabled}>
           {busy && !openRecord ? 'Punching in…' : 'Punch in'}
         </button>
@@ -134,6 +141,9 @@ export default function AttendanceActions({ uid, policy }) {
           {busy && openRecord ? 'Punching out…' : 'Punch out'}
         </button>
       </div>
+      {todayRecord?.workLocation && todayRecord?.punchIn && (
+        <p className="hrms-muted">Work location recorded: {todayRecord.workLocation === 'REMOTE' ? 'Remote' : 'Office'}</p>
+      )}
       {policyReady && (
         <p className="hrms-muted">
           Shift {policy.data.shiftStart}–{policy.data.shiftEnd} · grace {policy.data.graceMinutes} min. Times are

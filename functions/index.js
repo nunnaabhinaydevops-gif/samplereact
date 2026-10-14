@@ -147,6 +147,7 @@ exports.punchIn = onCall(async (request) => {
       uid,
       date: today,
       status: 'present',
+      workLocation,
       punchIn: Timestamp.fromDate(now),
       punchOut: null,
       isLate,
