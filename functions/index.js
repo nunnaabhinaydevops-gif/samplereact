@@ -12,6 +12,7 @@ const WORK_LOCATIONS = ['OFFICE', 'REMOTE']
 const EMPLOYMENT_TYPES = ['Full-time', 'Contract', 'Intern']
 const EMPLOYMENT_STATUSES = ['Probation', 'Active', 'Inactive']
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const E164_PHONE = /^\+[1-9]\d{7,14}$/
 const IST_OFFSET_MS = 330 * 60 * 1000
 const MAX_OFFER_BYTES = 3 * 1024 * 1024
 const CORRECTION_STATUSES = ['present', 'leave', 'absent']
@@ -251,6 +252,8 @@ exports.createStaff = onCall(async (request) => {
 
   const email = requiredText(values.email, 'Work email', 120).toLowerCase()
   if (!EMAIL.test(email)) throw invalid('Enter a valid work email.')
+  const phone = requiredText(values.phone, 'Mobile number', 20).replace(/[\s()-]/g, '')
+  if (!E164_PHONE.test(phone)) throw invalid('Enter the mobile number with its country code, such as +919876543210.')
   const fullName = requiredText(values.fullName, 'Full name', 80)
   const employeeId = requiredText(values.employeeId, 'Employee ID', 30)
   const department = requiredText(values.department, 'Department', 80)
@@ -269,10 +272,17 @@ exports.createStaff = onCall(async (request) => {
   const auth = getAuth(app)
   let account
   try {
-    account = await auth.createUser({ email, displayName: fullName })
+    account = await auth.createUser({
+      email,
+      displayName: fullName,
+      multiFactor: { enrolledFactors: [{ phoneNumber: phone, displayName: 'Mobile' }] },
+    })
   } catch (error) {
     if (error.code === 'auth/email-already-exists') {
       throw new HttpsError('already-exists', 'An account with this email already exists.')
+    }
+    if (error.code === 'auth/phone-number-already-exists') {
+      throw new HttpsError('already-exists', 'This mobile number is already registered to another account.')
     }
     throw error
   }
@@ -292,7 +302,7 @@ exports.createStaff = onCall(async (request) => {
       employmentType: values.employmentType,
       employmentStatus: values.employmentStatus,
       role: 'EMPLOYEE',
-      phone: '',
+      phone,
       address: '',
       photoPath: null,
       createdBy: hrUid,

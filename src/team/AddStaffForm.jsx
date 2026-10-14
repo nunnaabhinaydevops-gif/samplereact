@@ -5,6 +5,7 @@ import { EMPLOYMENT_STATUSES, EMPLOYMENT_TYPES } from '../me/constants'
 const TEXT_FIELDS = [
   { name: 'fullName', label: 'Full name', required: true },
   { name: 'email', label: 'Work email', type: 'email', required: true },
+  { name: 'phone', label: 'Mobile number (with country code)', type: 'tel', placeholder: '+91 98765 43210', required: true },
   { name: 'employeeId', label: 'Employee ID', required: true },
   { name: 'department', label: 'Department', required: true },
   { name: 'designation', label: 'Designation', required: true },
@@ -15,6 +16,7 @@ const TEXT_FIELDS = [
 const EMPTY_FORM = {
   fullName: '',
   email: '',
+  phone: '',
   employeeId: '',
   department: '',
   designation: '',
@@ -80,6 +82,7 @@ export default function AddStaffForm({ onClose }) {
           {field.label}
           <input
             type={field.type ?? 'text'}
+            placeholder={field.placeholder}
             value={form[field.name]}
             onChange={update(field.name)}
             required={field.required}
