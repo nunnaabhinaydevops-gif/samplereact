@@ -7,8 +7,6 @@ import Detail from './Detail'
 import { formatDateKey, toIstDateKey, yearsBetween } from './time'
 
 const TEXT_FIELDS = [
-  { name: 'fullName', label: 'Full name' },
-  { name: 'employeeId', label: 'Employee ID' },
   { name: 'department', label: 'Department' },
   { name: 'designation', label: 'Designation' },
   { name: 'reportingManager', label: 'Reporting manager' },
@@ -17,9 +15,6 @@ const TEXT_FIELDS = [
 
 function toFormValues(profile) {
   return {
-    fullName: profile.fullName ?? '',
-    employeeId: profile.employeeId ?? '',
-    birthday: profile.birthday ?? '',
     dateOfJoining: profile.dateOfJoining ?? '',
     department: profile.department ?? '',
     designation: profile.designation ?? '',
@@ -93,10 +88,6 @@ export default function EmploymentDetails({ profile, editable, canEditRole }) {
               <input type="text" value={form[field.name]} onChange={update(field.name)} />
             </label>
           ))}
-          <label className="hrms-field">
-            Birthday
-            <input type="date" value={form.birthday} onChange={update('birthday')} />
-          </label>
           <label className="hrms-field">
             Date of joining
             <input type="date" value={form.dateOfJoining} onChange={update('dateOfJoining')} />

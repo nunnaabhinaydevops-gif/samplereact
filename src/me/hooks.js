@@ -71,17 +71,17 @@ export function useUserProfile(uid) {
   return state
 }
 
-export function useDirectory(enabled) {
+export function useDirectory(enabled, collectionId = 'users') {
   const [state, setState] = useState({ status: 'loading', items: [], error: '' })
 
   useEffect(() => {
     if (!enabled) return undefined
     return onSnapshot(
-      collection(db, 'users'),
+      collection(db, collectionId),
       (snap) => setState({ status: 'ready', items: snap.docs.map(toProfile), error: '' }),
       (error) => setState({ status: 'error', items: [], error: error.message }),
     )
-  }, [enabled])
+  }, [enabled, collectionId])
 
   return state
 }

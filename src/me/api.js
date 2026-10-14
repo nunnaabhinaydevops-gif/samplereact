@@ -13,25 +13,28 @@ import {
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/
 const PHONE = /^\+?[0-9][0-9 ()-]{6,18}$/
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function callFunction(name, payload) {
   return httpsCallable(functions, name)(payload).then((result) => result.data)
 }
 
-export function validateContactDetails({ phone, address }) {
-  if (!PHONE.test(phone.trim())) {
+export function validatePersonalDetails(values, { canEditAll }) {
+  if (!PHONE.test(values.phone.trim())) {
     return 'Enter a valid phone number using digits, spaces, +, - or parentheses.'
   }
-  if (address.trim().length > 300) return 'Address must be 300 characters or fewer.'
+  if (values.address.trim().length > 300) return 'Address must be 300 characters or fewer.'
+  if (!canEditAll) return ''
+  if (!values.fullName.trim() || !values.employeeId.trim()) return 'Full name and employee ID are required.'
+  if (values.birthday && !DATE_KEY.test(values.birthday)) return 'Birthday must be a valid date.'
+  if (!EMAIL.test(values.email.trim())) return 'Enter a valid work email.'
   return ''
 }
 
 export function validateEmployment(values, { canEditRole }) {
-  const requiredText = ['fullName', 'employeeId', 'department', 'designation', 'workLocation']
-  if (requiredText.some((field) => !values[field].trim())) {
-    return 'Name, employee ID, department, designation and work location are required.'
+  if (!values.department.trim() || !values.designation.trim() || !values.workLocation.trim()) {
+    return 'Department, designation and work location are required.'
   }
-  if (values.birthday && !DATE_KEY.test(values.birthday)) return 'Birthday must be a valid date.'
   if (!DATE_KEY.test(values.dateOfJoining)) return 'Date of joining must be a valid date.'
   if (!EMPLOYMENT_STATUSES.includes(values.employmentStatus)) return 'Choose a valid employment status.'
   if (!EMPLOYMENT_TYPES.includes(values.employmentType)) return 'Choose a valid employment type.'
@@ -39,15 +42,18 @@ export function validateEmployment(values, { canEditRole }) {
   return ''
 }
 
-export function saveContactDetails(uid, { phone, address }) {
-  return updateDoc(doc(db, 'users', uid), { phone: phone.trim(), address: address.trim() })
+export function savePersonalDetails(uid, values, { canEditAll }) {
+  const payload = { phone: values.phone.trim(), address: values.address.trim() }
+  if (canEditAll) {
+    payload.fullName = values.fullName.trim()
+    payload.employeeId = values.employeeId.trim()
+    payload.birthday = values.birthday || null
+  }
+  return updateDoc(doc(db, 'users', uid), payload)
 }
 
 export function saveEmploymentDetails(uid, values, { canEditRole }) {
   const payload = {
-    fullName: values.fullName.trim(),
-    employeeId: values.employeeId.trim(),
-    birthday: values.birthday || null,
     dateOfJoining: values.dateOfJoining,
     department: values.department.trim(),
     designation: values.designation.trim(),
@@ -84,6 +90,18 @@ export function correctAttendance(payload) {
 
 export function createStaff(values) {
   return callFunction('createStaff', values)
+}
+
+export function changeEmployeeEmail(uid, email) {
+  return callFunction('changeEmployeeEmail', { uid, email })
+}
+
+export function deleteEmployee(uid) {
+  return callFunction('deleteEmployee', { uid })
+}
+
+export function restoreEmployee(uid) {
+  return callFunction('restoreEmployee', { uid })
 }
 
 function readFileAsBase64(file) {

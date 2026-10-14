@@ -6,6 +6,7 @@ import Celebrations from './Celebrations'
 import EmployeeProfile from './EmployeeProfile'
 import EmploymentDetails from './EmploymentDetails'
 import MyDocuments from './MyDocuments'
+import RemoveEmployee from './RemoveEmployee'
 import { HR_ROLES } from './constants'
 import { useDirectory, useSettingsDoc, useUserProfile } from './hooks'
 import './me.css'
@@ -118,10 +119,15 @@ export default function MeSection({ user }) {
         <div className="me-grid">
           {managed && !isSelf && (
             <>
-              <EmployeeProfile key={managed.id} user={managed} profile={managed} readOnly />
+              <EmployeeProfile key={managed.id} user={managed} profile={managed} managed />
               <div className="me-wide">
                 <EmploymentDetails key={managed.id} profile={managed} editable canEditRole={isSuperAdmin} />
               </div>
+              {isSuperAdmin && (
+                <div className="me-wide">
+                  <RemoveEmployee key={managed.id} person={managed} />
+                </div>
+              )}
             </>
           )}
           <EmployeeProfile user={user} profile={profile} />

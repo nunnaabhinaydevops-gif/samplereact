@@ -4,6 +4,7 @@ import { formatDate, statusTone } from '../hrms/format'
 import { HR_ROLES } from '../me/constants'
 import { useDirectory, useUserProfile } from '../me/hooks'
 import AddStaffForm from './AddStaffForm'
+import DeletedStaffList from './DeletedStaffList'
 import './team.css'
 
 function byName(a, b) {
@@ -38,6 +39,7 @@ export default function StaffList({ user }) {
     )
   }
 
+  const isSuperAdmin = profileState.profile.role === 'SUPER_ADMIN'
   const normalizedQuery = query.trim().toLowerCase()
   const staff = directory.items
     .filter((person) => !normalizedQuery || matchesQuery(person, normalizedQuery))
@@ -119,6 +121,8 @@ export default function StaffList({ user }) {
           </div>
         )}
       </Panel>
+
+      {isSuperAdmin && <DeletedStaffList />}
     </section>
   )
 }
