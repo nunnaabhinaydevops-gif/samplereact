@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Chip } from '../hrms/ui'
 import { statusTone } from '../hrms/format'
-import { saveContactDetails, uploadProfilePhoto, validateContactDetails } from './api'
+import { changeEmployeeEmail, savePersonalDetails, uploadProfilePhoto, validatePersonalDetails } from './api'
 import { PHOTO_TYPES } from './constants'
 import Detail from './Detail'
 import { usePhotoUrl } from './hooks'
@@ -18,34 +18,50 @@ function initialsOf(name) {
   )
 }
 
-export default function EmployeeProfile({ user, profile, readOnly = false }) {
+function toFormValues(profile) {
+  return {
+    fullName: profile.fullName ?? '',
+    employeeId: profile.employeeId ?? '',
+    birthday: profile.birthday ?? '',
+    email: profile.email ?? '',
+    phone: profile.phone ?? '',
+    address: profile.address ?? '',
+  }
+}
+
+export default function EmployeeProfile({ user, profile, managed = false }) {
   const photoUrl = usePhotoUrl(profile.photoPath)
   const fullName = profile.fullName || user.displayName || user.email
   const [editing, setEditing] = useState(false)
-  const [contact, setContact] = useState({ phone: '', address: '' })
+  const [form, setForm] = useState(() => toFormValues(profile))
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [feedback, setFeedback] = useState({ tone: '', message: '' })
   const fileInput = useRef(null)
 
+  const update = (name) => (event) => setForm({ ...form, [name]: event.target.value })
+
   function startEditing() {
-    setContact({ phone: profile.phone ?? '', address: profile.address ?? '' })
+    setForm(toFormValues(profile))
     setFeedback({ tone: '', message: '' })
     setEditing(true)
   }
 
   async function handleSave(event) {
     event.preventDefault()
-    const error = validateContactDetails(contact)
+    const error = validatePersonalDetails(form, { canEditAll: managed })
     if (error) {
       setFeedback({ tone: 'error', message: error })
       return
     }
     setSaving(true)
     try {
-      await saveContactDetails(profile.id, contact)
+      await savePersonalDetails(profile.id, form, { canEditAll: managed })
+      if (managed && form.email.trim().toLowerCase() !== (profile.email ?? '')) {
+        await changeEmployeeEmail(profile.id, form.email.trim())
+      }
       setEditing(false)
-      setFeedback({ tone: 'success', message: 'Contact details updated.' })
+      setFeedback({ tone: 'success', message: 'Personal details updated.' })
     } catch (err) {
       setFeedback({ tone: 'error', message: err.message })
     } finally {
@@ -80,7 +96,7 @@ export default function EmployeeProfile({ user, profile, readOnly = false }) {
               {initialsOf(fullName)}
             </span>
           )}
-          {!readOnly && (
+          {!managed && (
             <>
               <button
                 type="button"
@@ -119,36 +135,45 @@ export default function EmployeeProfile({ user, profile, readOnly = false }) {
 
       <div className="me-section-head">
         <h3>Personal details</h3>
-        {!editing && !readOnly && (
+        {!editing && (
           <button type="button" className="hrms-btn-ghost" onClick={startEditing}>
-            Edit phone and address
+            {managed ? 'Edit personal details' : 'Edit phone and address'}
           </button>
         )}
       </div>
 
       {editing ? (
-        <form className="me-form" onSubmit={handleSave}>
+        <form className="me-form me-form-grid" onSubmit={handleSave}>
+          {managed && (
+            <>
+              <label className="hrms-field">
+                Full name
+                <input type="text" value={form.fullName} onChange={update('fullName')} required />
+              </label>
+              <label className="hrms-field">
+                Employee ID
+                <input type="text" value={form.employeeId} onChange={update('employeeId')} required />
+              </label>
+              <label className="hrms-field">
+                Birthday
+                <input type="date" value={form.birthday} onChange={update('birthday')} />
+              </label>
+              <label className="hrms-field">
+                Email
+                <input type="email" value={form.email} onChange={update('email')} autoComplete="email" required />
+              </label>
+            </>
+          )}
           <label className="hrms-field">
             Phone number
-            <input
-              type="tel"
-              value={contact.phone}
-              onChange={(event) => setContact({ ...contact, phone: event.target.value })}
-              autoComplete="tel"
-              required
-            />
+            <input type="tel" value={form.phone} onChange={update('phone')} autoComplete="tel" required />
           </label>
-          <label className="hrms-field">
+          <label className="hrms-field me-span-all">
             Address
-            <textarea
-              rows={3}
-              maxLength={300}
-              value={contact.address}
-              onChange={(event) => setContact({ ...contact, address: event.target.value })}
-            />
+            <textarea rows={3} maxLength={300} value={form.address} onChange={update('address')} />
           </label>
-          <p className="hrms-muted">Other personal details are maintained by HR.</p>
-          <div className="me-actions">
+          {!managed && <p className="hrms-muted me-span-all">Other personal details are maintained by HR.</p>}
+          <div className="me-actions me-span-all">
             <button type="submit" className="hrms-btn" disabled={saving}>
               {saving ? 'Saving…' : 'Save changes'}
             </button>

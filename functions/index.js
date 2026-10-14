@@ -41,6 +41,15 @@ async function requireHr(request) {
   return uid
 }
 
+async function requireSuperAdmin(request) {
+  const uid = requireSignedIn(request)
+  const caller = await db.doc(`users/${uid}`).get()
+  if (!caller.exists || caller.get('role') !== 'SUPER_ADMIN') {
+    throw new HttpsError('permission-denied', 'Only super admins can do this.')
+  }
+  return uid
+}
+
 function invalid(message) {
   return new HttpsError('invalid-argument', message)
 }
@@ -316,6 +325,81 @@ exports.createStaff = onCall(async (request) => {
     console.error('createStaff: saving staff profile failed', error)
     throw new HttpsError('internal', `Could not save the staff profile: ${error.message}`)
   }
+})
+
+exports.changeEmployeeEmail = onCall(async (request) => {
+  await requireHr(request)
+  const uid = request.data?.uid
+  if (typeof uid !== 'string' || !uid) throw invalid('Choose an employee.')
+  const email = requiredText(request.data?.email, 'Work email', 120).toLowerCase()
+  if (!EMAIL.test(email)) throw invalid('Enter a valid work email.')
+
+  const target = db.doc(`users/${uid}`)
+  if (!(await target.get()).exists) throw new HttpsError('not-found', 'Employee not found.')
+
+  try {
+    await getAuth(app).updateUser(uid, { email })
+  } catch (error) {
+    if (error.code === 'auth/email-already-exists') {
+      throw new HttpsError('already-exists', 'An account with this email already exists.')
+    }
+    console.error('changeEmployeeEmail: updating auth email failed', error)
+    throw new HttpsError('internal', `Could not update the sign-in email: ${error.message}`)
+  }
+
+  await target.update({ email })
+  return { uid, email }
+})
+
+exports.deleteEmployee = onCall(async (request) => {
+  const adminUid = await requireSuperAdmin(request)
+  const uid = request.data?.uid
+  if (typeof uid !== 'string' || !uid) throw invalid('Choose an employee.')
+  if (uid === adminUid) throw new HttpsError('permission-denied', 'You cannot remove your own account.')
+
+  const userRef = db.doc(`users/${uid}`)
+  const snap = await userRef.get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Employee not found.')
+
+  await getAuth(app).updateUser(uid, { disabled: true })
+  await getAuth(app).revokeRefreshTokens(uid)
+
+  const batch = db.batch()
+  batch.set(db.doc(`deletedUsers/${uid}`), {
+    ...snap.data(),
+    deletedAt: FieldValue.serverTimestamp(),
+    deletedBy: adminUid,
+  })
+  batch.delete(userRef)
+  await batch.commit()
+  return { uid }
+})
+
+exports.restoreEmployee = onCall(async (request) => {
+  await requireSuperAdmin(request)
+  const uid = request.data?.uid
+  if (typeof uid !== 'string' || !uid) throw invalid('Choose an employee.')
+
+  const deletedRef = db.doc(`deletedUsers/${uid}`)
+  const snap = await deletedRef.get()
+  if (!snap.exists) throw new HttpsError('not-found', 'Deleted employee not found.')
+
+  const profile = { ...snap.data() }
+  delete profile.deletedAt
+  delete profile.deletedBy
+
+  const duplicate = await db.collection('users').where('employeeId', '==', profile.employeeId).limit(1).get()
+  if (!duplicate.empty) {
+    throw new HttpsError('already-exists', `Employee ID ${profile.employeeId} is now used by another employee.`)
+  }
+
+  await getAuth(app).updateUser(uid, { disabled: false })
+
+  const batch = db.batch()
+  batch.set(db.doc(`users/${uid}`), profile)
+  batch.delete(deletedRef)
+  await batch.commit()
+  return { uid }
 })
 
 exports.uploadOfferLetter = onCall(async (request) => {
