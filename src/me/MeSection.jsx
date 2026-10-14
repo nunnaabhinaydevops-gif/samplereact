@@ -30,6 +30,8 @@ export default function MeSection({ user }) {
   const isHr = Boolean(profile && HR_ROLES.includes(profile.role))
   const directory = useDirectory(isHr)
   const managed = isHr ? (directory.items.find((person) => person.id === managedId) ?? null) : null
+  const isSelf = managed?.id === user.uid
+  const isSuperAdmin = profile?.role === 'SUPER_ADMIN'
 
   if (profileState.status === 'loading') {
     return (
@@ -114,21 +116,20 @@ export default function MeSection({ user }) {
 
       {tab === 'overview' && (
         <div className="me-grid">
-          {managed && (
+          {managed && !isSelf && (
             <>
               <EmployeeProfile key={managed.id} user={managed} profile={managed} readOnly />
               <div className="me-wide">
-                <EmploymentDetails
-                  key={managed.id}
-                  profile={managed}
-                  editable
-                  canEditRole={profile.role === 'SUPER_ADMIN'}
-                />
+                <EmploymentDetails key={managed.id} profile={managed} editable canEditRole={isSuperAdmin} />
               </div>
             </>
           )}
           <EmployeeProfile user={user} profile={profile} />
-          <EmploymentDetails profile={profile} editable={false} canEditRole={false} />
+          <EmploymentDetails
+            profile={profile}
+            editable={isSelf}
+            canEditRole={isSelf && isSuperAdmin}
+          />
           <div className="me-wide">
             <Celebrations profile={profile} isHr={isHr} />
           </div>
