@@ -148,10 +148,10 @@ export default function MeSection({ user }) {
 
       {tab === 'attendance' && (
         <div className="me-attendance">
+          <AttendanceActions uid={profile.id} policy={policy} onPartialDayRequest={() => setTab('leave')} />
           <div className="me-attendance-top">
             <AttendanceStats uid={profile.id} />
             <AttendanceTimings uid={profile.id} policy={policy} />
-            <AttendanceActions uid={profile.id} policy={policy} />
           </div>
           <AttendanceLog
             uid={profile.id}
