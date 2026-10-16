@@ -10,6 +10,8 @@ export const OFFER_TEMPLATES = [
   { key: 'internship', label: 'Internship', employmentType: 'Intern' },
 ]
 
+export const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 export const WORK_LOCATIONS = [
   { value: 'OFFICE', label: 'Office' },
   { value: 'REMOTE', label: 'Remote' },

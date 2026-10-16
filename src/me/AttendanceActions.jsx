@@ -1,9 +1,18 @@
 import { useRef, useState } from 'react'
 import { Kpi } from '../hrms/ui'
 import { punchIn, punchOut } from './api'
-import { WORK_LOCATIONS, workLocationLabel } from './constants'
+import { WEEKDAY_NAMES, workLocationLabel } from './constants'
 import { useAttendanceRange, useNow } from './hooks'
-import { formatIstClock, formatIstLongDate, formatIstTime, formatMinutes, shiftDateKey, toIstDateKey } from './time'
+import {
+  formatDateKey,
+  formatIstClock,
+  formatIstLongDate,
+  formatIstTime,
+  formatMinutes,
+  formatTimeOfDay,
+  shiftDateKey,
+  toIstDateKey,
+} from './time'
 
 export default function AttendanceActions({ uid, policy }) {
   const now = useNow()
@@ -12,7 +21,7 @@ export default function AttendanceActions({ uid, policy }) {
   const attendance = useAttendanceRange(uid, yesterdayKey, todayKey)
   const [busy, setBusy] = useState(false)
   const [feedback, setFeedback] = useState({ tone: '', message: '' })
-  const [workLocation, setWorkLocation] = useState('OFFICE')
+  const [showPolicy, setShowPolicy] = useState(false)
   const busyRef = useRef(false)
 
   const todayRecord = attendance.records.find((record) => record.date === todayKey) ?? null
@@ -49,7 +58,7 @@ export default function AttendanceActions({ uid, policy }) {
     }
   }
 
-  function handlePunchIn() {
+  function handlePunchIn(workLocation) {
     return run(
       () => punchIn(workLocation),
       (result) =>
@@ -64,13 +73,14 @@ export default function AttendanceActions({ uid, policy }) {
   return (
     <section className="dash-card me-card">
       <div className="me-section-head">
-        <div>
-          <h3>Today</h3>
-          <p className="hrms-muted">{formatIstLongDate(now)} · Asia/Kolkata</p>
-        </div>
+        <h3>Actions</h3>
+      </div>
+
+      <div className="me-clock-block">
         <p className="me-clock" aria-live="off">
           {formatIstClock(now)}
         </p>
+        <p className="hrms-muted">{formatIstLongDate(now)}</p>
       </div>
 
       <p className="me-status">
@@ -105,6 +115,56 @@ export default function AttendanceActions({ uid, policy }) {
         </p>
       )}
 
+      <div className="me-action-list">
+        <button type="button" className="me-action-link" onClick={() => handlePunchIn('OFFICE')} disabled={punchInDisabled}>
+          {busy && !openRecord ? 'Clocking in…' : 'Clock in from office'}
+        </button>
+        <button type="button" className="me-action-link" onClick={() => handlePunchIn('REMOTE')} disabled={punchInDisabled}>
+          Clock in remotely
+        </button>
+        <button type="button" className="me-action-link" onClick={handlePunchOut} disabled={punchOutDisabled}>
+          {busy && openRecord ? 'Clocking out…' : 'Clock out'}
+        </button>
+        <button
+          type="button"
+          className="me-action-link"
+          aria-expanded={showPolicy}
+          onClick={() => setShowPolicy((open) => !open)}
+        >
+          {showPolicy ? 'Hide attendance policy' : 'Attendance policy'}
+        </button>
+      </div>
+
+      {showPolicy && (
+        <div className="me-policy">
+          {policyReady ? (
+            <>
+              <p>
+                <strong>Shift:</strong> {formatTimeOfDay(policy.data.shiftStart)} – {formatTimeOfDay(policy.data.shiftEnd)}
+              </p>
+              <p>
+                <strong>Grace period:</strong> {policy.data.graceMinutes} min
+              </p>
+              <p>
+                <strong>Weekly offs:</strong>{' '}
+                {(policy.data.weeklyOffs ?? []).map((day) => WEEKDAY_NAMES[day]).join(', ') || 'None'}
+              </p>
+              <p>
+                <strong>Holidays:</strong>{' '}
+                {(policy.data.holidays ?? []).length === 0
+                  ? 'None'
+                  : (policy.data.holidays ?? [])
+                      .map((holiday) => `${formatDateKey(holiday.date)} ${holiday.name}`)
+                      .join(', ')}
+              </p>
+              <p className="hrms-muted">Times are recorded by the server, not this device.</p>
+            </>
+          ) : (
+            <p className="hrms-muted">Shift timings and holidays appear once HR configures the policy.</p>
+          )}
+        </div>
+      )}
+
       <div className="hrms-kpis">
         <Kpi label="Punch in" value={todayRecord?.punchIn ? formatIstTime(todayRecord.punchIn) : '—'} tone="green" />
         <Kpi label="Punch out" value={todayRecord?.punchOut ? formatIstTime(todayRecord.punchOut) : '—'} tone="blue" />
@@ -114,42 +174,6 @@ export default function AttendanceActions({ uid, policy }) {
           tone="amber"
         />
       </div>
-
-      <label className="hrms-field">
-        Work location for this punch
-        <select value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} disabled={punchInDisabled}>
-          {WORK_LOCATIONS.map((location) => (
-            <option key={location.value} value={location.value}>
-              {location.label}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="me-actions">
-        <label className="hrms-field">
-          Work location
-          <select value={workLocation} onChange={(event) => setWorkLocation(event.target.value)} disabled={punchInDisabled}>
-            <option value="OFFICE">Office · Clock in</option>
-            <option value="REMOTE">Remote · Clock in</option>
-          </select>
-        </label>
-        <button type="button" className="hrms-btn" onClick={handlePunchIn} disabled={punchInDisabled}>
-          {busy && !openRecord ? 'Punching in…' : 'Punch in'}
-        </button>
-        <button type="button" className="hrms-btn-ghost" onClick={handlePunchOut} disabled={punchOutDisabled}>
-          {busy && openRecord ? 'Punching out…' : 'Punch out'}
-        </button>
-      </div>
-      {todayRecord?.workLocation && todayRecord?.punchIn && (
-        <p className="hrms-muted">Work location recorded: {todayRecord.workLocation === 'REMOTE' ? 'Remote' : 'Office'}</p>
-      )}
-      {policyReady && (
-        <p className="hrms-muted">
-          Shift {policy.data.shiftStart}–{policy.data.shiftEnd} · grace {policy.data.graceMinutes} min. Times are
-          recorded by the server, not this device.
-        </p>
-      )}
     </section>
   )
 }

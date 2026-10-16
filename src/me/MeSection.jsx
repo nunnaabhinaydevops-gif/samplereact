@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import AttendanceActions from './AttendanceActions'
-import AttendanceCalendar from './AttendanceCalendar'
 import AttendanceCorrections from './AttendanceCorrections'
+import AttendanceLog from './AttendanceLog'
+import AttendanceStats from './AttendanceStats'
+import AttendanceTimings from './AttendanceTimings'
 import Celebrations from './Celebrations'
 import EmployeeProfile from './EmployeeProfile'
 import EmploymentDetails from './EmploymentDetails'
@@ -12,8 +14,8 @@ import { useDirectory, useSettingsDoc, useUserProfile } from './hooks'
 import './me.css'
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
   { id: 'attendance', label: 'Attendance' },
+  { id: 'overview', label: 'Overview' },
   { id: 'documents', label: 'Documents' },
 ]
 
@@ -23,7 +25,7 @@ function nameOf(person, viewer) {
 }
 
 export default function MeSection({ user }) {
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab] = useState('attendance')
   const [managedId, setManagedId] = useState('')
   const profileState = useUserProfile(user.uid)
   const policy = useSettingsDoc('attendance')
@@ -143,16 +145,19 @@ export default function MeSection({ user }) {
       )}
 
       {tab === 'attendance' && (
-        <div className="me-grid">
-          <AttendanceActions uid={profile.id} policy={policy} />
-          <div className="me-wide">
-            <AttendanceCalendar uid={profile.id} policy={policy} />
+        <div className="me-attendance">
+          <div className="me-attendance-top">
+            <AttendanceStats uid={profile.id} />
+            <AttendanceTimings uid={profile.id} policy={policy} />
+            <AttendanceActions uid={profile.id} policy={policy} />
           </div>
-          {managed && (
-            <div className="me-wide">
-              <AttendanceCorrections key={managed.id} target={managed} viewerUid={user.uid} />
-            </div>
-          )}
+          <AttendanceLog
+            uid={profile.id}
+            policy={policy}
+            requestsSlot={
+              managed ? <AttendanceCorrections key={managed.id} target={managed} viewerUid={user.uid} /> : null
+            }
+          />
         </div>
       )}
 
