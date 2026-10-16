@@ -2,7 +2,7 @@
   --dash-ink: #14213d;
   --dash-muted: #6b7a90;
   --dash-line: #e3e9f2;
-  --dash-bg: #f0f3f8;
+  --dash-bg: #f4f6fb;
   --dash-blue: #1f6fd1;
   --dash-green: #17a673;
   --dash-rail: #14213d;
@@ -45,34 +45,43 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 20px;
-  background: linear-gradient(90deg, #1f6fd1, #2a7fd6);
+  padding: 10px 24px;
+  background: var(--dash-rail);
+  color: #fff;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dash-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
   color: #fff;
 }
 
 .dash-search {
   flex: 1 1 auto;
-  max-width: 420px;
+  max-width: 480px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.85);
+  background: #fff;
+  color: var(--dash-muted);
 
   input {
     flex: 1;
     min-width: 0;
     border: none;
     background: none;
-    color: #fff;
+    color: var(--dash-ink);
     font: inherit;
     outline: none;
 
     &::placeholder {
-      color: rgba(255, 255, 255, 0.75);
+      color: var(--dash-muted);
     }
   }
 }
@@ -90,7 +99,7 @@
   justify-content: center;
   gap: 6px;
   border: none;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
   font: inherit;
   cursor: pointer;
@@ -167,9 +176,9 @@
   }
 
   &.is-active {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    box-shadow: inset 3px 0 0 var(--dash-blue);
+    box-shadow: inset 3px 0 0 var(--dash-accent);
   }
 }
 
@@ -244,7 +253,7 @@
   gap: 20px;
   min-height: 0;
   min-width: 0;
-  padding: 20px;
+  padding: 24px;
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -271,6 +280,7 @@
   border: 1px solid var(--dash-line);
   border-radius: 12px;
   background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04), 0 6px 18px -14px rgba(20, 33, 61, 0.25);
   transition: box-shadow 0.2s;
 
   p {
@@ -278,7 +288,7 @@
   }
 
   &:hover {
-    box-shadow: 0 10px 24px -18px rgba(20, 33, 61, 0.35);
+    box-shadow: 0 10px 24px -14px rgba(20, 33, 61, 0.35);
   }
 }
 
@@ -404,7 +414,7 @@
   align-self: flex-start;
   padding: 8px 14px;
   border-radius: 8px;
-  background: var(--dash-blue);
+  background: var(--dash-accent);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -454,13 +464,17 @@
 .dash-tabs {
   display: inline-flex;
   align-self: flex-start;
-  gap: 8px;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--dash-line);
+  border-radius: 10px;
+  background: #fff;
 }
 
 .dash-tab {
-  padding: 8px 16px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 7px;
   background: none;
   color: var(--dash-muted);
   font: inherit;
@@ -468,9 +482,8 @@
   cursor: pointer;
 
   &.is-active {
-    border-color: var(--dash-ink);
-    background: #fff;
-    color: var(--dash-ink);
+    background: var(--dash-accent);
+    color: #fff;
   }
 }
 
@@ -536,24 +549,27 @@
 }
 
 .dash-welcome {
-  padding: 26px 28px;
-  border-radius: 10px;
+  padding: 28px 32px;
+  border-radius: 12px;
   background:
-    radial-gradient(ellipse at 85% 30%, rgba(255, 255, 255, 0.16), transparent 50%),
-    linear-gradient(100deg, #2e2a6e 0%, #4a3fa0 45%, #6c5cc4 80%, #5b4bb0 100%);
+    radial-gradient(circle at 78% 40%, rgba(255, 255, 255, 0.14) 0, transparent 24%),
+    radial-gradient(ellipse at 95% 110%, rgba(120, 190, 255, 0.4), transparent 50%),
+    radial-gradient(ellipse at 30% -20%, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(100deg, #1f1a4f 0%, #3b2f8f 40%, #5b4bb0 75%, #7a5fd0 100%);
+  box-shadow: 0 10px 30px -18px rgba(59, 47, 143, 0.7);
   color: #fff;
 
   h2 {
     margin: 0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
   }
 }
 
 .dash-section-title {
   margin: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--dash-ink);
 }
 

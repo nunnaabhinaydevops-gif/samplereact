@@ -391,6 +391,7 @@ export default function Dashboard({ user }) {
       </div>
 
       <header className="dash-topbar">
+        <span className="dash-brand-name">ATV Technologies</span>
         <label className="dash-search">
           <Icon name="search" />
           <input type="search" placeholder="Search employees, actions" />
