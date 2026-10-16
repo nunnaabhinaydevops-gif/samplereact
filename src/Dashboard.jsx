@@ -10,6 +10,7 @@ import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
 import ObjectivesPage from './me/ObjectivesPage.jsx'
+import PerformancePage from './performance/PerformancePage.jsx'
 import StaffList from './team/StaffList.jsx'
 import TeamSummary from './team/TeamSummary.jsx'
 import TeamTabs from './team/TeamTabs.jsx'
@@ -54,7 +55,7 @@ const railItems = [
   { label: 'Time', icon: 'clock' },
   { label: 'My Finances', icon: 'wallet', view: 'finances' },
   { label: 'Timesheet', icon: 'calendar' },
-  { label: 'Performance', icon: 'chart' },
+  { label: 'Performance', icon: 'chart', view: 'performance' },
 ]
 
 const composerTabs = [
@@ -492,6 +493,8 @@ export default function Dashboard({ user }) {
           <FinanceSection user={user} />
         ) : view === 'objectives' ? (
           <ObjectivesPage />
+        ) : view === 'performance' ? (
+          <PerformancePage />
         ) : (
           <>
             <section className="dash-welcome">
