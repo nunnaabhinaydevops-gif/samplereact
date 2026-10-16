@@ -14,6 +14,14 @@ import {
   toIstDateKey,
 } from './time'
 
+function ActionIcon({ children }) {
+  return (
+    <svg className="me-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+      {children}
+    </svg>
+  )
+}
+
 export default function AttendanceActions({ uid, policy }) {
   const now = useNow()
   const todayKey = toIstDateKey(now)
@@ -76,18 +84,65 @@ export default function AttendanceActions({ uid, policy }) {
         <h3>Actions</h3>
       </div>
 
-      <div className="me-clock-block">
-        <p className="me-clock" aria-live="off">
-          {formatIstClock(now)}
-        </p>
-        <p className="hrms-muted">{formatIstLongDate(now)}</p>
-      </div>
+      <div className="me-actions-body">
+        <div className="me-clock-block">
+          <p className="me-clock" aria-live="off">
+            {formatIstClock(now)}
+          </p>
+          <p className="hrms-muted">{formatIstLongDate(now)}</p>
+          <p className="me-status">
+            <span className={`me-status-dot ${openRecord ? 'is-live' : ''}`} aria-hidden="true" />
+            {statusText}
+            {punchedRecord && <span className="hrms-muted"> · {workLocationLabel(punchedRecord.workLocation)}</span>}
+          </p>
+        </div>
 
-      <p className="me-status">
-        <span className={`me-status-dot ${openRecord ? 'is-live' : ''}`} aria-hidden="true" />
-        {statusText}
-        {punchedRecord && <span className="hrms-muted"> · {workLocationLabel(punchedRecord.workLocation)}</span>}
-      </p>
+        <div className="me-action-list">
+          <button
+            type="button"
+            className="me-action-link"
+            onClick={() => handlePunchIn('OFFICE')}
+            disabled={punchInDisabled}
+          >
+            <ActionIcon>
+              <rect x="5" y="3" width="14" height="18" rx="2" />
+              <path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4" />
+            </ActionIcon>
+            {busy && !openRecord ? 'Clocking in…' : 'Office clock-in'}
+          </button>
+          <button
+            type="button"
+            className="me-action-link"
+            onClick={() => handlePunchIn('REMOTE')}
+            disabled={punchInDisabled}
+          >
+            <ActionIcon>
+              <rect x="3" y="4" width="18" height="12" rx="2" />
+              <path d="M8 20h8M12 16v4" />
+            </ActionIcon>
+            Remote clock-in
+          </button>
+          <button type="button" className="me-action-link" onClick={handlePunchOut} disabled={punchOutDisabled}>
+            <ActionIcon>
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5M21 12H9" />
+            </ActionIcon>
+            {busy && openRecord ? 'Clocking out…' : 'Clock out'}
+          </button>
+          <button
+            type="button"
+            className="me-action-link"
+            aria-expanded={showPolicy}
+            onClick={() => setShowPolicy((open) => !open)}
+          >
+            <ActionIcon>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6M8 13h8M8 17h8" />
+            </ActionIcon>
+            {showPolicy ? 'Hide attendance policy' : 'Attendance policy'}
+          </button>
+        </div>
+      </div>
 
       {policy.status === 'missing' && (
         <p className="me-feedback is-error" role="alert">
@@ -114,26 +169,6 @@ export default function AttendanceActions({ uid, policy }) {
           {feedback.message}
         </p>
       )}
-
-      <div className="me-action-list">
-        <button type="button" className="me-action-link" onClick={() => handlePunchIn('OFFICE')} disabled={punchInDisabled}>
-          {busy && !openRecord ? 'Clocking in…' : 'Clock in from office'}
-        </button>
-        <button type="button" className="me-action-link" onClick={() => handlePunchIn('REMOTE')} disabled={punchInDisabled}>
-          Clock in remotely
-        </button>
-        <button type="button" className="me-action-link" onClick={handlePunchOut} disabled={punchOutDisabled}>
-          {busy && openRecord ? 'Clocking out…' : 'Clock out'}
-        </button>
-        <button
-          type="button"
-          className="me-action-link"
-          aria-expanded={showPolicy}
-          onClick={() => setShowPolicy((open) => !open)}
-        >
-          {showPolicy ? 'Hide attendance policy' : 'Attendance policy'}
-        </button>
-      </div>
 
       {showPolicy && (
         <div className="me-policy">
