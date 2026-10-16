@@ -7,14 +7,15 @@ const currency = new Intl.NumberFormat('en-IN', {
   maximumFractionDigits: 0,
 })
 
-function sumFields(record, fields) {
+function sumPresent(record, fields) {
   return fields.reduce((total, field) => total + (Number(record[field]) || 0), 0)
 }
 
 export function summarizePayroll(record) {
-  const gross = sumFields(record, EARNING_FIELDS)
-  const totalDeductions = sumFields(record, DEDUCTION_FIELDS)
-  return { gross, totalDeductions, net: gross - totalDeductions }
+  const earningsComplete = EARNING_FIELDS.every((field) => typeof record[field] === 'number')
+  const gross = earningsComplete ? sumPresent(record, EARNING_FIELDS) : null
+  const totalDeductions = sumPresent(record, DEDUCTION_FIELDS)
+  return { gross, totalDeductions, net: gross === null ? null : gross - totalDeductions }
 }
 
 export function formatAmount(value) {
