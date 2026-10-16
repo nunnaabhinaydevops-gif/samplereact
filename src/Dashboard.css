@@ -143,6 +143,11 @@
   background: var(--dash-rail);
 }
 
+.dash-rail-slot {
+  display: flex;
+  flex-direction: column;
+}
+
 .dash-rail-item {
   display: flex;
   flex-direction: column;
@@ -204,6 +209,11 @@
   top: 0;
   left: 100%;
   display: none;
+}
+
+.dash-menu-link.is-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .dash-menu-link {

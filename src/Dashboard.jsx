@@ -5,11 +5,15 @@ import AttendanceSection from './hrms/AttendanceSection.jsx'
 import EmployeeSection from './hrms/EmployeeSection.jsx'
 import LeaveSection from './hrms/LeaveSection.jsx'
 import PayrollSection from './hrms/PayrollSection.jsx'
+import FinanceSection from './finance/FinanceSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
 import ObjectivesPage from './me/ObjectivesPage.jsx'
 import StaffList from './team/StaffList.jsx'
+import TeamSummary from './team/TeamSummary.jsx'
+import TeamTabs from './team/TeamTabs.jsx'
+import { TEAM_TABS } from './team/tabs.js'
 import { formatDate } from './hrms/format.js'
 import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
 import './Dashboard.css'
@@ -45,10 +49,10 @@ const meMenu = [
 const railItems = [
   { label: 'Home', icon: 'home', view: 'home' },
   { label: 'Me', icon: 'user', view: 'me', menu: meMenu },
-  { label: 'My Team', icon: 'team', view: 'team' },
+  { label: 'My Team', icon: 'team', view: 'team', hoverMenu: TEAM_TABS },
   { label: 'Org', icon: 'building' },
   { label: 'Time', icon: 'clock' },
-  { label: 'Payroll', icon: 'wallet' },
+  { label: 'My Finances', icon: 'wallet', view: 'finances' },
   { label: 'Timesheet', icon: 'calendar' },
   { label: 'Performance', icon: 'chart' },
 ]
@@ -304,6 +308,8 @@ export default function Dashboard({ user }) {
   const [celebrationTab, setCelebrationTab] = useState('Birthdays')
   const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests)
   const [openRailMenu, setOpenRailMenu] = useState(null)
+  const [hoverRailMenu, setHoverRailMenu] = useState(null)
+  const [teamTab, setTeamTab] = useState('summary')
   const railRef = useRef(null)
   const railMenuRef = useRef(null)
 
@@ -335,6 +341,18 @@ export default function Dashboard({ user }) {
     }
     const rect = event.currentTarget.getBoundingClientRect()
     setOpenRailMenu({ item, top: rect.top, left: rect.right })
+  }
+
+  function openHoverMenu(event, item) {
+    if (!item.hoverMenu) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    setHoverRailMenu({ item, top: rect.top, left: rect.right })
+  }
+
+  function selectTeamTab(tab) {
+    setView('team')
+    setTeamTab(tab)
+    setHoverRailMenu(null)
   }
 
   function closeRailMenu(view) {
@@ -396,16 +414,37 @@ export default function Dashboard({ user }) {
 
       <nav ref={railRef} className="dash-rail">
         {railItems.map((item) => (
-          <button
+          <div
             key={item.label}
-            type="button"
-            className={item.view === activeRailView ? 'dash-rail-item is-active' : 'dash-rail-item'}
-            aria-expanded={item.menu ? openRailMenu?.item === item : undefined}
-            onClick={(event) => handleRailClick(event, item)}
+            className="dash-rail-slot"
+            onMouseEnter={(event) => openHoverMenu(event, item)}
+            onMouseLeave={() => setHoverRailMenu(null)}
           >
-            <Icon name={item.icon} />
-            <span>{item.label}</span>
-          </button>
+            <button
+              type="button"
+              className={item.view === activeRailView ? 'dash-rail-item is-active' : 'dash-rail-item'}
+              aria-expanded={item.menu ? openRailMenu?.item === item : undefined}
+              onClick={(event) => handleRailClick(event, item)}
+            >
+              <Icon name={item.icon} />
+              <span>{item.label}</span>
+            </button>
+            {hoverRailMenu?.item === item && (
+              <ul className="dash-menu" style={{ top: hoverRailMenu.top, left: hoverRailMenu.left }}>
+                {item.hoverMenu.map((entry) => (
+                  <li key={entry.id}>
+                    <button
+                      type="button"
+                      className={view === 'team' && teamTab === entry.id ? 'dash-menu-link is-active' : 'dash-menu-link'}
+                      onClick={() => selectTeamTab(entry.id)}
+                    >
+                      {entry.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         ))}
       </nav>
 
@@ -445,7 +484,12 @@ export default function Dashboard({ user }) {
         {view === 'me' ? (
           <MeSection user={user} />
         ) : view === 'team' ? (
-          <StaffList user={user} />
+          <>
+            <TeamTabs active={teamTab} onChange={setTeamTab} />
+            {teamTab === 'summary' ? <TeamSummary user={user} /> : <StaffList user={user} />}
+          </>
+        ) : view === 'finances' ? (
+          <FinanceSection user={user} />
         ) : view === 'objectives' ? (
           <ObjectivesPage />
         ) : (

@@ -583,3 +583,60 @@ exports.cancelLeave = onCall(async (request) => {
     return { id, status: 'CANCELLED' }
   })
 })
+
+const BANK_ACCOUNT = /^\d{9,18}$/
+const IFSC = /^[A-Z]{4}0[A-Z0-9]{6}$/
+
+function requireText(value, label, min, max) {
+  const text = typeof value === 'string' ? value.trim() : ''
+  if (text.length < min || text.length > max) throw invalid(`${label} must be between ${min} and ${max} characters.`)
+  return text
+}
+
+exports.submitBankDetails = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const accountNumber = typeof request.data?.accountNumber === 'string' ? request.data.accountNumber.trim() : ''
+  const confirmAccountNumber =
+    typeof request.data?.confirmAccountNumber === 'string' ? request.data.confirmAccountNumber.trim() : ''
+  const ifsc = typeof request.data?.ifsc === 'string' ? request.data.ifsc.trim().toUpperCase() : ''
+
+  const bankName = requireText(request.data?.bankName, 'Bank name', 2, 80)
+  const accountHolderName = requireText(request.data?.accountHolderName, 'Account holder name', 2, 80)
+  const branch = requireText(request.data?.branch, 'Branch', 2, 80)
+  if (!BANK_ACCOUNT.test(accountNumber)) throw invalid('Account number must be 9 to 18 digits.')
+  if (accountNumber !== confirmAccountNumber) throw invalid('Account numbers do not match.')
+  if (!IFSC.test(ifsc)) throw invalid('Enter a valid IFSC code.')
+
+  const submittedAt = FieldValue.serverTimestamp()
+  const batch = db.batch()
+  batch.set(db.doc(`bankAccounts/${uid}`), { uid, accountNumber, updatedAt: submittedAt })
+  batch.set(db.doc(`bankDetails/${uid}`), {
+    uid,
+    paymentMode: 'Bank Transfer',
+    bankName,
+    accountNumberMasked: `XXXX${accountNumber.slice(-4)}`,
+    ifsc,
+    accountHolderName,
+    branch,
+    verificationStatus: 'pending',
+    submittedAt,
+  })
+  await batch.commit()
+
+  return { status: 'pending' }
+})
+
+exports.getPayslip = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const recordId = request.data?.recordId
+  if (typeof recordId !== 'string' || !recordId) throw invalid('Choose a payslip.')
+
+  const snap = await db.collection('payrollRecords').doc(recordId).get()
+  const callerRole = (await db.doc(`users/${uid}`).get()).get('role')
+  const allowed = snap.exists && (HR_ROLES.includes(callerRole) || snap.get('uid') === uid)
+  if (!allowed || !snap.get('payslipPath')) throw new HttpsError('not-found', 'Payslip not found.')
+
+  const [contents] = await getStorage(app).bucket().file(snap.get('payslipPath')).download()
+  const label = String(snap.get('cycleLabel') ?? recordId).replace(/[^\w.-]/g, '_').slice(0, 80)
+  return { fileName: `payslip-${label}.pdf`, contentBase64: contents.toString('base64') }
+})

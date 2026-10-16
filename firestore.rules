@@ -119,6 +119,17 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /payrollRecords/{recordId} {
+      allow get, list: if signedIn()
+        && (resource.data.uid == request.auth.uid || isHr());
+      allow create, update, delete: if false;
+    }
+
+    match /bankDetails/{userId} {
+      allow get: if signedIn() && (request.auth.uid == userId || isHr());
+      allow list, create, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
