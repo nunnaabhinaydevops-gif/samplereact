@@ -7,7 +7,7 @@ import Detail from './Detail'
 import { usePhotoUrl } from './hooks'
 import { formatDateKey } from './time'
 
-function initialsOf(name) {
+export function initialsOf(name) {
   return (
     name
       .split(' ')

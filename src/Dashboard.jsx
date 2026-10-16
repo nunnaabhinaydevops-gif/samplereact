@@ -9,6 +9,9 @@ import FinanceSection from './finance/FinanceSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
+import MyProfile from './me/MyProfile.jsx'
+import UserPreferences from './preferences/UserPreferences.jsx'
+import ChangePassword from './account/ChangePassword.jsx'
 import ObjectivesPage from './me/ObjectivesPage.jsx'
 import PerformancePage from './performance/PerformancePage.jsx'
 import StaffList from './team/StaffList.jsx'
@@ -24,6 +27,27 @@ const ATV_MARK_URL =
   'https://cdn.builder.io/api/v1/image/assets%2Fbe4f45e0d3a8447cad3e911783d5b4fa%2F763872ed0a73419193efedc08b2ca7a5?format=webp&width=800&height=1200'
 
 const INBOX_COUNT = 3
+
+const initialNotifications = [
+  { id: 1, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '3w', unread: true },
+  { id: 2, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '1mo', unread: true },
+  { id: 3, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '2mo', unread: true },
+  { id: 4, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '3mo', unread: true },
+]
+
+const DISPLAY_MODES = [
+  { id: 'light', label: 'Light', icon: 'sun' },
+  { id: 'dark', label: 'Dark', icon: 'moon' },
+  { id: 'auto', label: 'Auto', icon: 'monitor' },
+]
+
+const THEME_COLORS = [
+  { id: 'purple', label: 'Purple', value: '#5b4bb0' },
+  { id: 'blue', label: 'Blue', value: '#1f5fd1' },
+  { id: 'pink', label: 'Pink', value: '#b4487d' },
+  { id: 'green', label: 'Green', value: '#4ea56f' },
+  { id: 'orange', label: 'Orange', value: '#e89a2e' },
+]
 
 const meMenu = [
   { label: 'Attendance' },
@@ -202,6 +226,35 @@ const ICONS = {
       <path d="M10 21a2 2 0 0 0 4 0" />
     </>
   ),
+  pulse: <path d="M2 12h4l2.5-6 5 12 2.5-6H22" />,
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
+  monitor: (
+    <>
+      <rect x="2" y="4" width="20" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </>
+  ),
+  check: <path d="M20 6L9 17l-5-5" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.4-.2-.8-.4-1.1-.2-.3-.4-.6-.4-1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.4-4-7.7-9-7.7z" />
+      <circle cx="7.5" cy="11" r="1" />
+      <circle cx="10" cy="7.5" r="1" />
+      <circle cx="14.5" cy="7.5" r="1" />
+    </>
+  ),
+  key: (
+    <>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2" />
+    </>
+  ),
   logout: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -243,6 +296,26 @@ function Icon({ name }) {
     >
       {ICONS[name]}
     </svg>
+  )
+}
+
+function ProfileMenuItem({ icon, label, onClick, expanded, children }) {
+  const hasSubmenu = expanded !== undefined
+
+  return (
+    <li className="dash-profile-group">
+      <button
+        type="button"
+        className={expanded ? 'dash-profile-item is-open' : 'dash-profile-item'}
+        aria-expanded={hasSubmenu ? expanded : undefined}
+        onClick={onClick}
+      >
+        <Icon name={icon} />
+        <span className="dash-profile-label">{label}</span>
+        {hasSubmenu && <ChevronRight />}
+      </button>
+      {expanded && children}
+    </li>
   )
 }
 
@@ -313,6 +386,13 @@ export default function Dashboard({ user }) {
   const [teamTab, setTeamTab] = useState('summary')
   const railRef = useRef(null)
   const railMenuRef = useRef(null)
+  const topActionsRef = useRef(null)
+  const [openTopMenu, setOpenTopMenu] = useState(null)
+  const [notifications, setNotifications] = useState(initialNotifications)
+  const [openProfileSubmenu, setOpenProfileSubmenu] = useState(null)
+  const [displayMode, setDisplayMode] = useState('light')
+  const [themeColor, setThemeColor] = useState(THEME_COLORS[0])
+  const [preferences, setPreferences] = useState({ language: 'English', dateFormat: 'DD/MM/YYYY' })
 
   useEffect(() => {
     if (!openRailMenu) return
@@ -333,6 +413,39 @@ export default function Dashboard({ user }) {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [openRailMenu])
+
+  useEffect(() => {
+    if (!openTopMenu) return
+
+    function handlePointerDown(event) {
+      if (topActionsRef.current?.contains(event.target)) return
+      setOpenTopMenu(null)
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setOpenTopMenu(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openTopMenu])
+
+  function toggleTopMenu(menu) {
+    setOpenTopMenu((current) => (current === menu ? null : menu))
+    setOpenProfileSubmenu(null)
+  }
+
+  function toggleProfileSubmenu(submenu) {
+    setOpenProfileSubmenu((current) => (current === submenu ? null : submenu))
+  }
+
+  function markAllNotificationsRead() {
+    setNotifications((items) => items.map((item) => ({ ...item, unread: false })))
+  }
 
   function handleRailClick(event, item) {
     if (item.view) setView(item.view)
@@ -382,10 +495,10 @@ export default function Dashboard({ user }) {
     year: 'numeric',
   })
 
-  const activeRailView = view === 'objectives' ? 'me' : view
+  const activeRailView = view === 'objectives' || view === 'profile' ? 'me' : view
 
   return (
-    <div className="dash">
+    <div className="dash" style={{ '--dash-accent': themeColor.value }}>
       <div className="dash-brandcell">
         <img src={ATV_MARK_URL} alt="ATV Technologies" />
       </div>
@@ -396,21 +509,136 @@ export default function Dashboard({ user }) {
           <Icon name="search" />
           <input type="search" placeholder="Search employees, actions" />
         </label>
-        <div className="dash-topbar-actions">
+        <div ref={topActionsRef} className="dash-topbar-actions">
           <button type="button" className="dash-icon-btn" aria-label="Settings">
             <Icon name="gear" />
           </button>
-          <button type="button" className="dash-icon-btn" aria-label="Notifications">
+          <button
+            type="button"
+            className="dash-icon-btn"
+            aria-label="Notifications"
+            aria-expanded={openTopMenu === 'notifications'}
+            onClick={() => toggleTopMenu('notifications')}
+          >
             <Icon name="bell" />
           </button>
-          <div className="dash-user">
+          <button
+            type="button"
+            className="dash-user"
+            aria-haspopup="menu"
+            aria-expanded={openTopMenu === 'profile'}
+            onClick={() => toggleTopMenu('profile')}
+          >
             <span className="dash-avatar">{initial}</span>
             <span>{name}</span>
-          </div>
-          <button type="button" className="dash-signout" onClick={() => signOut(auth)}>
-            <Icon name="logout" />
-            Sign out
           </button>
+
+          {openTopMenu === 'notifications' && (
+            <div className="dash-popover dash-notifications" role="dialog" aria-label="Notifications">
+              <div className="dash-popover-head">
+                <span>Notifications</span>
+                <button type="button" className="dash-link-btn" onClick={markAllNotificationsRead}>
+                  Mark all as read
+                </button>
+              </div>
+              <ul className="dash-notice-list">
+                {notifications.map((item) => (
+                  <li key={item.id} className={item.unread ? 'dash-notice is-unread' : 'dash-notice'}>
+                    <span className="dash-notice-dot" aria-hidden="true" />
+                    <span className="dash-notice-icon">
+                      <Icon name="pulse" />
+                    </span>
+                    <div>
+                      <p>{item.text}</p>
+                      <time>{item.ago}</time>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {openTopMenu === 'profile' && (
+            <ul className="dash-popover dash-profile-menu">
+              <ProfileMenuItem
+                icon="user"
+                label="My profile"
+                onClick={() => {
+                  setView('profile')
+                  setOpenTopMenu(null)
+                }}
+              />
+              <ProfileMenuItem
+                icon="sun"
+                label="Display mode"
+                expanded={openProfileSubmenu === 'display'}
+                onClick={() => toggleProfileSubmenu('display')}
+              >
+                <ul className="dash-popover dash-profile-submenu">
+                  {DISPLAY_MODES.map((mode) => (
+                    <li key={mode.id}>
+                      <button
+                        type="button"
+                        className={displayMode === mode.id ? 'dash-profile-item is-selected' : 'dash-profile-item'}
+                        onClick={() => setDisplayMode(mode.id)}
+                      >
+                        <Icon name={mode.icon} />
+                        <span className="dash-profile-label">{mode.label}</span>
+                        {displayMode === mode.id && (
+                          <span className="dash-profile-check">
+                            <Icon name="check" />
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </ProfileMenuItem>
+              <ProfileMenuItem
+                icon="palette"
+                label="Theme color"
+                expanded={openProfileSubmenu === 'theme'}
+                onClick={() => toggleProfileSubmenu('theme')}
+              >
+                <ul className="dash-popover dash-profile-submenu">
+                  {THEME_COLORS.map((color) => (
+                    <li key={color.id}>
+                      <button
+                        type="button"
+                        className={themeColor.id === color.id ? 'dash-profile-item is-selected' : 'dash-profile-item'}
+                        onClick={() => setThemeColor(color)}
+                      >
+                        <span className="dash-swatch" style={{ background: color.value }} />
+                        <span className="dash-profile-label">{color.label}</span>
+                        {themeColor.id === color.id && (
+                          <span className="dash-profile-check">
+                            <Icon name="check" />
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </ProfileMenuItem>
+              <ProfileMenuItem
+                icon="gear"
+                label="User preferences"
+                onClick={() => {
+                  setView('preferences')
+                  setOpenTopMenu(null)
+                }}
+              />
+              <ProfileMenuItem
+                icon="key"
+                label="Change password"
+                onClick={() => {
+                  setView('password')
+                  setOpenTopMenu(null)
+                }}
+              />
+              <ProfileMenuItem icon="logout" label="Logout" onClick={() => signOut(auth)} />
+            </ul>
+          )}
         </div>
       </header>
 
@@ -485,6 +713,22 @@ export default function Dashboard({ user }) {
       <main className="dash-content">
         {view === 'me' ? (
           <MeSection user={user} />
+        ) : view === 'profile' ? (
+          <MyProfile user={user} />
+        ) : view === 'preferences' ? (
+          <UserPreferences
+            preferences={preferences}
+            onSavePreferences={setPreferences}
+            onBack={() => setView('home')}
+            displayMode={displayMode}
+            onDisplayModeChange={setDisplayMode}
+            displayModes={DISPLAY_MODES}
+            themeColor={themeColor}
+            onThemeColorChange={setThemeColor}
+            themeColors={THEME_COLORS}
+          />
+        ) : view === 'password' ? (
+          <ChangePassword user={user} onBack={() => setView('home')} />
         ) : view === 'team' ? (
           <>
             <TeamTabs active={teamTab} onChange={setTeamTab} />
