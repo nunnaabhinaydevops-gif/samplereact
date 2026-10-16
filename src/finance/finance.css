@@ -204,6 +204,52 @@
   color: #1d2b4f;
 }
 
+.fin-sub-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e3e6ee;
+}
+
+.fin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.fin-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: #f7f8fb;
+}
+
+.fin-stat strong {
+  font-size: 1.1rem;
+}
+
+.fin-muted {
+  font-size: 0.78rem;
+  color: #5b6786;
+}
+
+.fin-pad {
+  margin-top: 12px;
+}
+
+.fin-declaration .fin-muted {
+  display: block;
+}
+
+.fin-form-foot {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .fin-toolbar {
     grid-template-columns: 1fr;

@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import IncomeTaxTab from './IncomeTaxTab'
+import LoansTab from './LoansTab'
 import MySalaryTab from './MySalaryTab'
 import PayslipsTab from './PayslipsTab'
 import SummaryTab from './SummaryTab'
+import TaxTab from './TaxTab'
 import { usePayrollRecords } from './hooks'
+import { currentFinancialYear } from './tax'
 import './finance.css'
 
 const MAIN_TABS = [
@@ -18,21 +22,6 @@ const PAY_TABS = [
   { id: 'income-tax', label: 'Income Tax' },
 ]
 
-const NOT_CONFIGURED = {
-  tax: {
-    title: 'Manage Tax',
-    text: 'Tax declarations are not set up in the HRMS yet. HR needs to configure this section before you can submit declarations here.',
-  },
-  loans: {
-    title: 'Loans',
-    text: 'Loan records are not set up in the HRMS yet. HR needs to configure this section before your loans appear here.',
-  },
-  'income-tax': {
-    title: 'Income Tax',
-    text: 'Income tax computation is not configured in the HRMS yet. HR needs to set up tax regime details before they appear here.',
-  },
-}
-
 export default function FinanceSection({ user }) {
   const [tab, setTab] = useState('summary')
   const [paySub, setPaySub] = useState('salary')
@@ -45,8 +34,8 @@ export default function FinanceSection({ user }) {
     setPaySub('payslips')
   }
 
-  const placeholder = NOT_CONFIGURED[tab === 'pay' ? paySub : tab]
   const ready = payroll.status === 'ready'
+  const financialYear = currentFinancialYear()
 
   return (
     <section className="fin-page" aria-label="My Finances">
@@ -103,12 +92,11 @@ export default function FinanceSection({ user }) {
         />
       )}
 
-      {placeholder && (
-        <section className="dash-card fin-card">
-          <h3 className="fin-card-title">{placeholder.title}</h3>
-          <p className="me-state">{placeholder.text}</p>
-        </section>
-      )}
+      {tab === 'pay' && paySub === 'income-tax' && <IncomeTaxTab uid={user.uid} financialYear={financialYear} />}
+
+      {tab === 'tax' && <TaxTab uid={user.uid} financialYear={financialYear} />}
+
+      {tab === 'loans' && <LoansTab uid={user.uid} />}
     </section>
   )
 }

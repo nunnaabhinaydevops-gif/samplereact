@@ -130,6 +130,30 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
+    match /taxDeclarations/{declarationId} {
+      allow get: if signedIn()
+        && (declarationId.matches(request.auth.uid + '_.*') || isHr());
+      allow list, create, update, delete: if false;
+    }
+
+    match /taxSummaries/{summaryId} {
+      allow get: if signedIn()
+        && (summaryId.matches(request.auth.uid + '_.*') || isHr());
+      allow list, create, update, delete: if false;
+    }
+
+    match /loans/{loanId} {
+      allow get, list: if signedIn()
+        && (resource.data.uid == request.auth.uid || isHr());
+      allow create, update, delete: if false;
+    }
+
+    match /loanRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.uid == request.auth.uid || isHr());
+      allow create, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

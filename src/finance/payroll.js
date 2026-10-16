@@ -26,6 +26,13 @@ export function formatText(value) {
   return value === null || value === undefined || value === '' ? 'Not Available' : String(value)
 }
 
+export function formatTimestamp(value) {
+  const date = value?.toDate?.()
+  return date
+    ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'Not Available'
+}
+
 export function isApplicable(...values) {
   return values.some((value) => value !== null && value !== undefined && value !== '')
 }

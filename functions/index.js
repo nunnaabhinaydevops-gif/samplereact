@@ -21,6 +21,26 @@ const TIME_OF_DAY = /^([01]\d|2[0-3]):([0-5]\d)$/
 const DAY_MS = 24 * 60 * 60 * 1000
 const LEAVE_REASON_MAX = 300
 const LEAVE_ID = /^[A-Za-z0-9]+$/
+const FINANCIAL_YEAR = /^\d{4}-\d{2}$/
+
+// Keep in sync with DECLARATION_SECTIONS in src/finance/tax.js
+const DECLARATION_LIMITS = {
+  ppf: 150000,
+  elss: 150000,
+  lifeInsurance: 150000,
+  homeLoanPrincipal: 150000,
+  tuitionFees: 150000,
+  healthSelf: 25000,
+  healthParents: 50000,
+  npsEmployee: 50000,
+  homeLoanInterest: 200000,
+}
+const SECTION_80C_ITEMS = ['ppf', 'elss', 'lifeInsurance', 'homeLoanPrincipal', 'tuitionFees']
+const SECTION_80C_LIMIT = 150000
+
+// Keep in sync with LOAN_TYPES and LOAN_LIMITS in src/finance/loans.js
+const LOAN_TYPES = ['Personal loan', 'Emergency loan', 'Education loan']
+const LOAN_LIMITS = { minAmount: 5000, maxAmount: 500000, minTenure: 3, maxTenure: 60 }
 
 // Keep in sync with LEAVE_TYPES in src/me/constants.js
 const LEAVE_ALLOWANCES = { CASUAL: 12, SICK: 8, EARNED: 18 }
@@ -639,4 +659,64 @@ exports.getPayslip = onCall(async (request) => {
   const [contents] = await getStorage(app).bucket().file(snap.get('payslipPath')).download()
   const label = String(snap.get('cycleLabel') ?? recordId).replace(/[^\w.-]/g, '_').slice(0, 80)
   return { fileName: `payslip-${label}.pdf`, contentBase64: contents.toString('base64') }
+})
+
+exports.saveTaxDeclaration = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const financialYear = request.data?.financialYear
+  const submitted = request.data?.items
+  if (typeof financialYear !== 'string' || !FINANCIAL_YEAR.test(financialYear)) {
+    throw invalid('Choose a valid financial year.')
+  }
+  if (!submitted || typeof submitted !== 'object' || Array.isArray(submitted)) {
+    throw invalid('Declaration items are missing.')
+  }
+  if (Object.keys(submitted).some((id) => !Object.hasOwn(DECLARATION_LIMITS, id))) {
+    throw invalid('Unknown declaration item.')
+  }
+
+  const items = {}
+  for (const [id, max] of Object.entries(DECLARATION_LIMITS)) {
+    const value = submitted[id] ?? 0
+    if (!Number.isInteger(value) || value < 0 || value > max) {
+      throw invalid('Enter whole rupee amounts within each limit.')
+    }
+    items[id] = value
+  }
+  const combined80c = SECTION_80C_ITEMS.reduce((total, id) => total + items[id], 0)
+  if (combined80c > SECTION_80C_LIMIT) throw invalid('1.5 Lakh deductions cannot exceed ₹1,50,000 combined.')
+
+  await db.doc(`taxDeclarations/${uid}_${financialYear}`).set({
+    uid,
+    financialYear,
+    items,
+    submittedAt: FieldValue.serverTimestamp(),
+  })
+  return { status: 'saved' }
+})
+
+exports.requestLoan = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const type = request.data?.type
+  const amount = request.data?.amount
+  const tenureMonths = request.data?.tenureMonths
+  if (!LOAN_TYPES.includes(type)) throw invalid('Choose a loan type.')
+  if (!Number.isInteger(amount) || amount < LOAN_LIMITS.minAmount || amount > LOAN_LIMITS.maxAmount) {
+    throw invalid('Loan amount is outside the allowed range.')
+  }
+  if (!Number.isInteger(tenureMonths) || tenureMonths < LOAN_LIMITS.minTenure || tenureMonths > LOAN_LIMITS.maxTenure) {
+    throw invalid('Tenure is outside the allowed range.')
+  }
+  const reason = requireText(request.data?.reason, 'Reason', 10, 300)
+
+  const ref = await db.collection('loanRequests').add({
+    uid,
+    type,
+    amount,
+    tenureMonths,
+    reason,
+    status: 'pending',
+    createdAt: FieldValue.serverTimestamp(),
+  })
+  return { id: ref.id, status: 'pending' }
 })
