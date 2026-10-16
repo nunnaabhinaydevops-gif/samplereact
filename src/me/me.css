@@ -510,7 +510,7 @@
 }
 
 .me-stat-value {
-  font-size: 18px;
+  font-size: 20px;
   color: var(--dash-ink);
   font-variant-numeric: tabular-nums;
 }
@@ -574,7 +574,7 @@
 
 .me-timeline {
   position: relative;
-  height: 10px;
+  height: 8px;
   border-radius: 999px;
   background: var(--dash-line);
   overflow: hidden;
@@ -703,6 +703,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+  min-height: 88px;
   padding: 14px;
   border: 1px solid var(--dash-line);
   border-radius: 10px;
@@ -711,14 +712,20 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 
   .me-icon {
     color: var(--dash-muted);
   }
 
+  &:not(:disabled):hover {
+    border-color: var(--dash-blue);
+  }
+
   &.is-selected {
     border-color: var(--dash-blue);
     background: #eef5ff;
+    box-shadow: 0 0 0 3px rgba(31, 111, 209, 0.12);
 
     .me-icon {
       color: var(--dash-blue);
@@ -765,28 +772,44 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--dash-line);
+  min-height: 92px;
+  padding: 18px 20px;
+  border: 1.5px solid var(--dash-line);
   border-radius: 12px;
   background: #fff;
   color: var(--dash-ink);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
   .me-icon {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
   }
 
   &.is-in {
     border-color: transparent;
     background: linear-gradient(135deg, var(--dash-green), var(--dash-blue));
     color: #fff;
+    box-shadow: 0 8px 18px rgba(31, 111, 209, 0.25);
+  }
+
+  &.is-out {
+    border-color: #f2b8ba;
   }
 
   &.is-out .me-icon {
     color: #e5484d;
+  }
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  &.is-out:not(:disabled):hover {
+    border-color: #e5484d;
+    background: #fff5f5;
   }
 
   &:disabled {
@@ -802,7 +825,7 @@
 
 .me-punch-title {
   display: block;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
 }
 
@@ -825,10 +848,12 @@
   gap: 4px;
   min-width: 0;
   margin: 0;
-  padding: 14px 16px;
+  min-height: 96px;
+  padding: 12px 14px;
   border: 1px solid var(--dash-line);
   border-radius: 10px;
   background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04);
 }
 
 .me-kpi-label {
@@ -840,7 +865,7 @@
 
 .me-kpi-value {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--dash-ink);
   font-variant-numeric: tabular-nums;
@@ -1447,7 +1472,12 @@
     font-size: 18px;
   }
 
-  .me-kpi-row {
+  .me-kpi-row,
+  .me-stat-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .me-punch-btn {
+    padding: 14px 16px;
   }
 }
