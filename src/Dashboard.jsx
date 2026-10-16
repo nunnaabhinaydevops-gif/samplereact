@@ -5,6 +5,7 @@ import AttendanceSection from './hrms/AttendanceSection.jsx'
 import EmployeeSection from './hrms/EmployeeSection.jsx'
 import LeaveSection from './hrms/LeaveSection.jsx'
 import PayrollSection from './hrms/PayrollSection.jsx'
+import FinanceSection from './finance/FinanceSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
@@ -51,7 +52,7 @@ const railItems = [
   { label: 'My Team', icon: 'team', view: 'team', hoverMenu: TEAM_TABS },
   { label: 'Org', icon: 'building' },
   { label: 'Time', icon: 'clock' },
-  { label: 'Payroll', icon: 'wallet' },
+  { label: 'My Finances', icon: 'wallet', view: 'finances' },
   { label: 'Timesheet', icon: 'calendar' },
   { label: 'Performance', icon: 'chart' },
 ]
@@ -487,6 +488,8 @@ export default function Dashboard({ user }) {
             <TeamTabs active={teamTab} onChange={setTeamTab} />
             {teamTab === 'summary' ? <TeamSummary user={user} /> : <StaffList user={user} />}
           </>
+        ) : view === 'finances' ? (
+          <FinanceSection user={user} />
         ) : view === 'objectives' ? (
           <ObjectivesPage />
         ) : (
