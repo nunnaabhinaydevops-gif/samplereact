@@ -53,8 +53,6 @@ const railItems = [
   { label: 'Performance', icon: 'chart' },
 ]
 
-const subnavItems = ['Home', 'Inbox', 'Notifications', 'Activity', 'Events']
-
 const composerTabs = [
   { label: 'Post', icon: 'edit' },
   { label: 'Announcement', icon: 'megaphone' },
@@ -301,7 +299,6 @@ function BalanceRing({ label, remaining, total }) {
 export default function Dashboard({ user }) {
   const now = useNow()
   const [scope, setScope] = useState('Organisation')
-  const [activeSubnav, setActiveSubnav] = useState('Home')
   const [view, setView] = useState('home')
   const [composerTab, setComposerTab] = useState('Post')
   const [celebrationTab, setCelebrationTab] = useState('Birthdays')
@@ -443,20 +440,6 @@ export default function Dashboard({ user }) {
           ))}
         </ul>
       )}
-
-      <nav className="dash-subnav">
-        {subnavItems.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className={activeSubnav === item ? 'dash-subnav-item is-active' : 'dash-subnav-item'}
-            onClick={() => setActiveSubnav(item)}
-          >
-            {item}
-            {item === 'Inbox' && <span className="dash-count">{INBOX_COUNT}</span>}
-          </button>
-        ))}
-      </nav>
 
       <main className="dash-content">
         {view === 'me' ? (

@@ -10,7 +10,7 @@
 
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100svh;
   overflow: hidden;
   box-sizing: border-box;
@@ -133,7 +133,7 @@
 
 .dash-rail {
   grid-column: 1;
-  grid-row: 2 / 4;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -226,65 +226,9 @@
   }
 }
 
-.dash-subnav {
-  grid-column: 2;
-  grid-row: 2;
-  display: flex;
-  align-items: stretch;
-  gap: 24px;
-  padding: 0 20px;
-  overflow-x: auto;
-  background: #fff;
-  border-bottom: 1px solid var(--dash-line);
-}
-
-.dash-subnav-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 14px 0;
-  border: none;
-  background: none;
-  color: var(--dash-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  white-space: nowrap;
-  cursor: pointer;
-
-  &.is-active {
-    color: var(--dash-blue);
-
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 3px;
-      border-radius: 3px 3px 0 0;
-      background: var(--dash-blue);
-    }
-  }
-}
-
-.dash-count {
-  display: grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: #e5484d;
-  color: #fff;
-  font-size: 11px;
-}
-
 .dash-content {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -758,7 +702,6 @@
   .dash-brandcell,
   .dash-topbar,
   .dash-rail,
-  .dash-subnav,
   .dash-content {
     grid-column: 1;
     grid-row: auto;
