@@ -9,24 +9,6 @@
   min-width: 0;
 }
 
-.me-page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-
-  h2 {
-    margin: 0;
-    font-size: 22px;
-    color: var(--dash-ink);
-  }
-
-  p {
-    margin: 2px 0 0;
-  }
-}
-
 .me-tabs {
   display: flex;
   gap: 24px;
@@ -68,6 +50,125 @@
     outline: 2px solid var(--dash-accent);
     outline-offset: 2px;
   }
+}
+
+.me-hero {
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.me-hero-banner {
+  height: 150px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.18), transparent 40%),
+    linear-gradient(115deg, #161b4a 0%, var(--dash-accent) 55%, #8f5fe8 100%);
+}
+
+.me-hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px 0;
+  min-width: 0;
+}
+
+.me-hero-identity {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: -44px;
+}
+
+.me-hero-avatar {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #6cbf6c;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.me-hero-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 4px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    font-size: 22px;
+    color: var(--dash-ink);
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--dash-muted);
+  }
+}
+
+.me-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--dash-muted);
+
+  li {
+    overflow-wrap: anywhere;
+  }
+}
+
+.me-hero-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.me-hero-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--dash-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dash-ink);
+    overflow-wrap: anywhere;
+  }
+}
+
+.me-hero .me-tabs {
+  flex: none;
+  margin-top: 4px;
 }
 
 .me-grid {

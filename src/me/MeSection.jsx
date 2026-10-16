@@ -9,6 +9,7 @@ import EmployeeProfile from './EmployeeProfile'
 import EmploymentDetails from './EmploymentDetails'
 import LeavePage from './LeavePage'
 import MyDocuments from './MyDocuments'
+import ProfileHero from './ProfileHero'
 import RemoveEmployee from './RemoveEmployee'
 import { HR_ROLES } from './constants'
 import { useDirectory, useSettingsDoc, useUserProfile } from './hooks'
@@ -75,25 +76,7 @@ export default function MeSection({ user }) {
 
   return (
     <section className="me-page" aria-labelledby="me-page-title">
-      <header className="me-page-head">
-        <div>
-          <h2 id="me-page-title">Me</h2>
-          <p className="hrms-muted">Your profile, attendance and documents</p>
-        </div>
-        <nav className="me-tabs" aria-label="Me sections">
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={tab === item.id ? 'me-tab is-active' : 'me-tab'}
-              aria-current={tab === item.id ? 'page' : undefined}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </header>
+      <ProfileHero user={user} profile={profile} tabs={TABS} activeTab={tab} onSelectTab={setTab} />
 
       {isHr && (
         <section className="dash-card me-card">
