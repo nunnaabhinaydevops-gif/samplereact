@@ -17,7 +17,6 @@ function toAttendanceRecord(snap) {
     punchIn: data.punchIn?.toDate() ?? null,
     punchOut: data.punchOut?.toDate() ?? null,
     isLate: Boolean(data.isLate),
-    workLocation: data.workLocation ?? 'OFFICE',
     workedMinutes: data.workedMinutes ?? null,
     correctionReason: data.correction?.reason ?? null,
   }
@@ -124,6 +123,36 @@ export function useAttendanceRange(uid, fromKey, toKey) {
       (error) => setState({ status: 'error', records: [], error: error.message }),
     )
   }, [uid, fromKey, toKey])
+
+  return state
+}
+
+function toLeaveRequest(snap) {
+  const data = snap.data()
+  return {
+    id: snap.id,
+    type: data.type,
+    from: data.from,
+    to: data.to,
+    days: data.days,
+    reason: data.reason ?? '',
+    status: data.status,
+    createdAt: data.createdAt?.toDate() ?? null,
+    updatedAt: data.updatedAt?.toDate() ?? null,
+  }
+}
+
+export function useLeaveRequests(uid) {
+  const [state, setState] = useState({ status: 'loading', requests: [], error: '' })
+
+  useEffect(() => {
+    if (!uid) return undefined
+    return onSnapshot(
+      query(collection(db, 'leaveRequests'), where('uid', '==', uid)),
+      (snap) => setState({ status: 'ready', requests: snap.docs.map(toLeaveRequest), error: '' }),
+      (error) => setState({ status: 'error', requests: [], error: error.message }),
+    )
+  }, [uid])
 
   return state
 }

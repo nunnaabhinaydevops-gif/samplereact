@@ -105,6 +105,12 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /leaveRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.uid == request.auth.uid || isHr());
+      allow create, update, delete: if false;
+    }
+
     match /employeeDocuments/{documentId} {
       allow get, list: if signedIn()
         && (isHr()

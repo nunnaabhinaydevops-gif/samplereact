@@ -28,6 +28,10 @@ export function weekdayOfDateKey(dateKey) {
   return new Date(`${dateKey}T00:00:00Z`).getUTCDay()
 }
 
+export function mondayOfDateKey(dateKey) {
+  return shiftDateKey(dateKey, -((weekdayOfDateKey(dateKey) + 6) % 7))
+}
+
 export function monthKeyOf(dateKey) {
   return dateKey.slice(0, 7)
 }
@@ -52,12 +56,12 @@ export function formatDateKey(dateKey, options = {}) {
   })
 }
 
-export function formatIstTime(date) {
+export function formatIstTime(date, hour12 = true) {
   return new Intl.DateTimeFormat('en-IN', {
     timeZone: IST_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hourCycle: hour12 ? 'h12' : 'h23',
   }).format(date)
 }
 
@@ -85,6 +89,30 @@ export function formatMinutes(total) {
   const hours = Math.floor(total / 60)
   const minutes = total % 60
   return `${hours}h ${String(minutes).padStart(2, '0')}m`
+}
+
+export function formatTimeOfDay(value) {
+  const [hours, minutes] = value.split(':').map(Number)
+  return new Date(Date.UTC(2000, 0, 1, hours, minutes)).toLocaleTimeString('en-IN', {
+    timeZone: 'UTC',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function minuteOfTimeOfDay(value) {
+  const [hours, minutes] = value.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+export function shiftSpanMinutes(shiftStart, shiftEnd) {
+  return (minuteOfTimeOfDay(shiftEnd) - minuteOfTimeOfDay(shiftStart) + 1440) % 1440
+}
+
+export function minuteOfShiftStartOffset(date, shiftStart) {
+  const offset = toIstMinuteOfDay(date) - minuteOfTimeOfDay(shiftStart)
+  return offset < -720 ? offset + 1440 : offset
 }
 
 export function yearsBetween(fromKey, toKey) {

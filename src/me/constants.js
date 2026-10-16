@@ -10,6 +10,22 @@ export const OFFER_TEMPLATES = [
   { key: 'internship', label: 'Internship', employmentType: 'Intern' },
 ]
 
+export const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+export const LEAVE_TYPES = [
+  { value: 'CASUAL', label: 'Casual leave', allowance: 12, color: '#7c5cd6' },
+  { value: 'SICK', label: 'Sick leave', allowance: 8, color: '#4fb3d9' },
+  { value: 'EARNED', label: 'Earned leave', allowance: 18, color: '#e09b1a' },
+]
+
+export const LEAVE_STATUS_LABELS = {
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
+}
+
 export const WORK_LOCATIONS = [
   { value: 'OFFICE', label: 'Office' },
   { value: 'REMOTE', label: 'Remote' },

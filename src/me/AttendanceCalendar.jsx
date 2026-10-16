@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Chip, Kpi } from '../hrms/ui'
 import { DAY_STATUS, deriveDayStatus } from './attendanceStatus'
-import { workLocationLabel } from './constants'
+import { WEEKDAY_NAMES, workLocationLabel } from './constants'
 import { useAttendanceRange, useNow } from './hooks'
 import {
   daysInMonthKey,
@@ -14,7 +14,6 @@ import {
   weekdayOfDateKey,
 } from './time'
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const LEGEND = ['present', 'late', 'incomplete', 'absent', 'leave', 'holiday', 'weekly_off', 'working']
 
 export default function AttendanceCalendar({ uid, policy }) {
@@ -98,7 +97,7 @@ export default function AttendanceCalendar({ uid, policy }) {
       </div>
 
       <div className="me-calendar">
-        {WEEKDAYS.map((weekday) => (
+        {WEEKDAY_NAMES.map((weekday) => (
           <span key={weekday} className="me-cal-head">
             {weekday}
           </span>

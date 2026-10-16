@@ -18,6 +18,12 @@ const MAX_OFFER_BYTES = 3 * 1024 * 1024
 const CORRECTION_STATUSES = ['present', 'leave', 'absent']
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/
 const TIME_OF_DAY = /^([01]\d|2[0-3]):([0-5]\d)$/
+const DAY_MS = 24 * 60 * 60 * 1000
+const LEAVE_REASON_MAX = 300
+const LEAVE_ID = /^[A-Za-z0-9]+$/
+
+// Keep in sync with LEAVE_TYPES in src/me/constants.js
+const LEAVE_ALLOWANCES = { CASUAL: 12, SICK: 8, EARNED: 18 }
 
 // Keep in sync with OFFER_TEMPLATES in src/me/constants.js
 const OFFER_TEMPLATES = {
@@ -503,4 +509,77 @@ exports.getOfferLetter = onCall(async (request) => {
 
   const [contents] = await getStorage(app).bucket().file(data.storagePath).download()
   return { fileName: data.fileName, contentBase64: contents.toString('base64') }
+})
+
+function parseDateKeyDay(value) {
+  if (typeof value !== 'string' || !DATE_KEY.test(value)) return null
+  const time = Date.parse(`${value}T00:00:00Z`)
+  if (Number.isNaN(time) || new Date(time).toISOString().slice(0, 10) !== value) return null
+  return time / DAY_MS
+}
+
+exports.requestLeave = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const type = request.data?.type
+  const reason = typeof request.data?.reason === 'string' ? request.data.reason.trim() : ''
+  if (!Object.hasOwn(LEAVE_ALLOWANCES, type)) throw invalid('Choose a valid leave type.')
+  if (reason.length > LEAVE_REASON_MAX) throw invalid(`Reason must be ${LEAVE_REASON_MAX} characters or fewer.`)
+
+  const { from, to } = request.data
+  const fromDay = parseDateKeyDay(from)
+  const toDay = parseDateKeyDay(to)
+  if (fromDay === null || toDay === null) throw invalid('Choose valid leave dates.')
+  if (toDay < fromDay) throw invalid('The end date must be on or after the start date.')
+  const days = toDay - fromDay + 1
+  const year = from.slice(0, 4)
+  const requestsRef = db.collection('leaveRequests')
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(requestsRef.where('uid', '==', uid))
+    const active = snap.docs
+      .map((doc) => doc.data())
+      .filter((data) => ['PENDING', 'APPROVED'].includes(data.status))
+
+    if (active.some((data) => data.from <= to && data.to >= from)) {
+      throw new HttpsError('already-exists', 'You already have a pending or approved leave request for these dates.')
+    }
+
+    const usedDays = active
+      .filter((data) => data.type === type && data.from.startsWith(year))
+      .reduce((sum, data) => sum + data.days, 0)
+    if (usedDays + days > LEAVE_ALLOWANCES[type]) {
+      throw new HttpsError('failed-precondition', 'This request exceeds your remaining balance for that leave type.')
+    }
+
+    const ref = requestsRef.doc()
+    tx.set(ref, {
+      uid,
+      type,
+      from,
+      to,
+      days,
+      reason,
+      status: 'PENDING',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+    return { id: ref.id, days, status: 'PENDING' }
+  })
+})
+
+exports.cancelLeave = onCall(async (request) => {
+  const uid = requireSignedIn(request)
+  const id = request.data?.id
+  if (typeof id !== 'string' || !LEAVE_ID.test(id)) throw invalid('Choose a leave request to cancel.')
+
+  const ref = db.collection('leaveRequests').doc(id)
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref)
+    if (!snap.exists || snap.get('uid') !== uid) throw new HttpsError('not-found', 'Leave request not found.')
+    if (snap.get('status') !== 'PENDING') {
+      throw new HttpsError('failed-precondition', 'Only pending leave requests can be cancelled.')
+    }
+    tx.update(ref, { status: 'CANCELLED', updatedAt: FieldValue.serverTimestamp() })
+    return { id, status: 'CANCELLED' }
+  })
 })
