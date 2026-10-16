@@ -10,6 +10,8 @@ import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
 import MyProfile from './me/MyProfile.jsx'
+import UserPreferences from './preferences/UserPreferences.jsx'
+import ChangePassword from './account/ChangePassword.jsx'
 import ObjectivesPage from './me/ObjectivesPage.jsx'
 import PerformancePage from './performance/PerformancePage.jsx'
 import StaffList from './team/StaffList.jsx'
@@ -390,6 +392,7 @@ export default function Dashboard({ user }) {
   const [openProfileSubmenu, setOpenProfileSubmenu] = useState(null)
   const [displayMode, setDisplayMode] = useState('light')
   const [themeColor, setThemeColor] = useState(THEME_COLORS[0])
+  const [preferences, setPreferences] = useState({ language: 'English', dateFormat: 'DD/MM/YYYY' })
 
   useEffect(() => {
     if (!openRailMenu) return
@@ -617,8 +620,22 @@ export default function Dashboard({ user }) {
                   ))}
                 </ul>
               </ProfileMenuItem>
-              <ProfileMenuItem icon="gear" label="User preferences" />
-              <ProfileMenuItem icon="key" label="Change password" />
+              <ProfileMenuItem
+                icon="gear"
+                label="User preferences"
+                onClick={() => {
+                  setView('preferences')
+                  setOpenTopMenu(null)
+                }}
+              />
+              <ProfileMenuItem
+                icon="key"
+                label="Change password"
+                onClick={() => {
+                  setView('password')
+                  setOpenTopMenu(null)
+                }}
+              />
               <ProfileMenuItem icon="logout" label="Logout" onClick={() => signOut(auth)} />
             </ul>
           )}
@@ -698,6 +715,20 @@ export default function Dashboard({ user }) {
           <MeSection user={user} />
         ) : view === 'profile' ? (
           <MyProfile user={user} />
+        ) : view === 'preferences' ? (
+          <UserPreferences
+            preferences={preferences}
+            onSavePreferences={setPreferences}
+            onBack={() => setView('home')}
+            displayMode={displayMode}
+            onDisplayModeChange={setDisplayMode}
+            displayModes={DISPLAY_MODES}
+            themeColor={themeColor}
+            onThemeColorChange={setThemeColor}
+            themeColors={THEME_COLORS}
+          />
+        ) : view === 'password' ? (
+          <ChangePassword user={user} onBack={() => setView('home')} />
         ) : view === 'team' ? (
           <>
             <TeamTabs active={teamTab} onChange={setTeamTab} />
