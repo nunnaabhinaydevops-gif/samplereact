@@ -8,6 +8,7 @@ import PayrollSection from './hrms/PayrollSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
+import ObjectivesPage from './me/ObjectivesPage.jsx'
 import StaffList from './team/StaffList.jsx'
 import { formatDate } from './hrms/format.js'
 import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
@@ -24,10 +25,21 @@ const meMenu = [
   { label: 'Leave' },
   {
     label: 'Performance',
-    children: ['Objectives', '1:1 Meetings', 'Feedback', 'PIP', 'Reviews', 'Skills', 'Competencies & Core Values'],
+    children: [
+      { label: 'Objectives', view: 'objectives' },
+      { label: '1:1 Meetings' },
+      { label: 'Feedback' },
+      { label: 'PIP' },
+      { label: 'Reviews' },
+      { label: 'Skills' },
+      { label: 'Competencies & Core values' },
+    ],
   },
-  { label: 'Expenses & Travel', children: ['Pending Expenses', 'Past Claims', 'Advance Requests'] },
-  { label: 'Apps', children: ['My Apps', 'Apps center'] },
+  {
+    label: 'Expenses & Travel',
+    children: [{ label: 'Pending Expenses' }, { label: 'Past Claims' }, { label: 'Advance Requests' }],
+  },
+  { label: 'Apps', children: [{ label: 'My Apps' }, { label: 'Apps center' }] },
 ]
 
 const railItems = [
@@ -354,6 +366,8 @@ export default function Dashboard({ user }) {
     year: 'numeric',
   })
 
+  const activeRailView = view === 'objectives' ? 'me' : view
+
   return (
     <div className="dash">
       <div className="dash-brandcell">
@@ -388,7 +402,7 @@ export default function Dashboard({ user }) {
           <button
             key={item.label}
             type="button"
-            className={item.view === view ? 'dash-rail-item is-active' : 'dash-rail-item'}
+            className={item.view === activeRailView ? 'dash-rail-item is-active' : 'dash-rail-item'}
             aria-expanded={item.menu ? openRailMenu?.item === item : undefined}
             onClick={(event) => handleRailClick(event, item)}
           >
@@ -413,13 +427,13 @@ export default function Dashboard({ user }) {
               {entry.children && (
                 <ul className="dash-submenu">
                   {entry.children.map((child) => (
-                    <li key={child}>
+                    <li key={child.label}>
                       <button
                         type="button"
                         className="dash-menu-link"
-                        onClick={() => closeRailMenu(openRailMenu.item.view)}
+                        onClick={() => closeRailMenu(child.view ?? openRailMenu.item.view)}
                       >
-                        {child}
+                        {child.label}
                       </button>
                     </li>
                   ))}
@@ -449,6 +463,8 @@ export default function Dashboard({ user }) {
           <MeSection user={user} />
         ) : view === 'team' ? (
           <StaffList user={user} />
+        ) : view === 'objectives' ? (
+          <ObjectivesPage />
         ) : (
           <>
             <section className="dash-welcome">
