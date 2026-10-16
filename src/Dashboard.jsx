@@ -9,6 +9,7 @@ import FinanceSection from './finance/FinanceSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
+import MyProfile from './me/MyProfile.jsx'
 import ObjectivesPage from './me/ObjectivesPage.jsx'
 import PerformancePage from './performance/PerformancePage.jsx'
 import StaffList from './team/StaffList.jsx'
@@ -491,7 +492,7 @@ export default function Dashboard({ user }) {
     year: 'numeric',
   })
 
-  const activeRailView = view === 'objectives' ? 'me' : view
+  const activeRailView = view === 'objectives' || view === 'profile' ? 'me' : view
 
   return (
     <div className="dash" style={{ '--dash-accent': themeColor.value }}>
@@ -560,7 +561,7 @@ export default function Dashboard({ user }) {
                 icon="user"
                 label="My profile"
                 onClick={() => {
-                  setView('me')
+                  setView('profile')
                   setOpenTopMenu(null)
                 }}
               />
@@ -695,6 +696,8 @@ export default function Dashboard({ user }) {
       <main className="dash-content">
         {view === 'me' ? (
           <MeSection user={user} />
+        ) : view === 'profile' ? (
+          <MyProfile user={user} />
         ) : view === 'team' ? (
           <>
             <TeamTabs active={teamTab} onChange={setTeamTab} />

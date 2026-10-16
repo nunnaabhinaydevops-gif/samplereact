@@ -1,0 +1,124 @@
+.dash-card.myprofile {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.myprofile-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 150px;
+  padding: 0 24px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.18), transparent 40%),
+    linear-gradient(115deg, #161b4a 0%, var(--dash-accent) 55%, #8f5fe8 100%);
+  color: #fff;
+}
+
+.myprofile-avatar {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  flex-shrink: 0;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  background: #6cbf6c;
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.myprofile-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.myprofile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 24px 0;
+  min-width: 0;
+}
+
+.myprofile-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--dash-ink);
+
+  li {
+    overflow-wrap: anywhere;
+  }
+}
+
+.myprofile-job {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.myprofile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--dash-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dash-ink);
+    overflow-wrap: anywhere;
+  }
+}
+
+.dash-card.myprofile .myprofile-tabs {
+  flex: none;
+  margin: 18px 24px 0;
+}
+
+.myprofile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px 24px;
+  min-width: 0;
+}
