@@ -32,12 +32,17 @@ const railItems = [
 
 const subnavItems = ['Home', 'Inbox', 'Notifications', 'Activity', 'Events']
 
-const composerTabs = ['Post', 'Announcement', 'Poll', 'Praise']
+const composerTabs = [
+  { label: 'Post', icon: 'edit' },
+  { label: 'Announcement', icon: 'megaphone' },
+  { label: 'Poll', icon: 'poll' },
+  { label: 'Praise', icon: 'praise' },
+]
 
 const todayCounts = [
-  { label: 'Birthdays', value: 8 },
-  { label: 'Work anniversaries', value: 2 },
-  { label: 'New joinees', value: 4 },
+  { label: 'Birthdays', value: 8, icon: 'cake' },
+  { label: 'Work anniversaries', value: 2, icon: 'award' },
+  { label: 'New joinees', value: 4, icon: 'userPlus' },
 ]
 
 const peers = [
@@ -125,6 +130,34 @@ const ICONS = {
     </>
   ),
   chart: <path d="M3 3v18h18M7 15l4-4 3 3 5-6" />,
+  edit: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </>
+  ),
+  megaphone: <path d="M3 11v2a1 1 0 0 0 1 1h2l6 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8" />,
+  poll: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  praise: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />,
+  cake: (
+    <>
+      <path d="M4 21V11h16v10M4 15c2 1 4 1 6 0s4-1 6 0 2 1 4 0M12 11V7" />
+      <path d="M12 4v.01" />
+    </>
+  ),
+  award: (
+    <>
+      <circle cx="12" cy="9" r="6" />
+      <path d="M8.5 14L7 22l5-2.5L17 22l-1.5-8" />
+    </>
+  ),
+  userPlus: (
+    <>
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21c0-3.9 3.1-6 7-6s7 2.1 7 6M19 8v6M16 11h6" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
   search: (
     <>
       <circle cx="11" cy="11" r="7" />
@@ -167,6 +200,23 @@ function Icon({ name }) {
       {ICONS[name]}
     </svg>
   )
+}
+
+function initialsOf(text) {
+  return text
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+function toIsoDate(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
 function useNow() {
@@ -213,6 +263,7 @@ export default function Dashboard({ user }) {
   const [activeSubnav, setActiveSubnav] = useState('Home')
   const [view, setView] = useState('home')
   const [composerTab, setComposerTab] = useState('Post')
+  const [celebrationTab, setCelebrationTab] = useState('Birthdays')
   const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests)
 
   const name = user.displayName || user.email.split('@')[0]
@@ -220,6 +271,11 @@ export default function Dashboard({ user }) {
   const visiblePosts = posts.filter((post) => post.scope === scope)
   const balances = getLeaveBalances(leaveRequests)
   const nextHoliday = holidays[0]
+  const todayIso = toIsoDate(now)
+  const onLeaveToday = leaveRequests.filter(
+    (request) => request.status === 'Approved' && request.from <= todayIso && todayIso <= request.to,
+  )
+  const celebration = todayCounts.find((item) => item.label === celebrationTab)
   const clock = now.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -295,12 +351,37 @@ export default function Dashboard({ user }) {
           <StaffList user={user} />
         ) : (
           <>
+            <section className="dash-welcome">
+              <h2>Welcome {name}!</h2>
+            </section>
+
             <div className="dash-columns">
               <div className="dash-stack">
+                <h3 className="dash-section-title">Quick Access</h3>
+
                 <section className="dash-holiday">
                   <p className="dash-holiday-label">Holidays</p>
                   <h3>{nextHoliday.name}</h3>
                   <p>{formatDate(nextHoliday.date)}</p>
+                </section>
+
+                <section className="dash-card">
+                  <h4 className="dash-card-title">On leave today</h4>
+                  {onLeaveToday.length === 0 ? (
+                    <p className="dash-empty">No one is on leave today.</p>
+                  ) : (
+                    <div className="dash-leave-list">
+                      {onLeaveToday.map((request) => {
+                        const person = request.employee === 'You' ? name : request.employee
+                        return (
+                          <div key={request.id} className="dash-leave-person">
+                            <span className="dash-peer-avatar">{initialsOf(person)}</span>
+                            <span>{person}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </section>
 
                 <section className="dash-card">
@@ -372,25 +453,52 @@ export default function Dashboard({ user }) {
                   <div className="dash-composer-tabs">
                     {composerTabs.map((tab) => (
                       <button
-                        key={tab}
+                        key={tab.label}
                         type="button"
-                        className={composerTab === tab ? 'dash-composer-tab is-active' : 'dash-composer-tab'}
-                        onClick={() => setComposerTab(tab)}
+                        className={composerTab === tab.label ? 'dash-composer-tab is-active' : 'dash-composer-tab'}
+                        onClick={() => setComposerTab(tab.label)}
                       >
-                        {tab}
+                        <Icon name={tab.icon} />
+                        {tab.label}
                       </button>
                     ))}
                   </div>
-                  <textarea placeholder="Write your post here..." rows={3} />
+                  <textarea placeholder="Write your post here and mention your peers" rows={3} />
                 </section>
 
-                <section className="dash-card dash-today">
-                  <span className="dash-card-title">Today</span>
-                  {todayCounts.map((item) => (
-                    <span key={item.label} className="dash-today-item">
-                      {item.label} <strong>{item.value}</strong>
-                    </span>
-                  ))}
+                <section className="dash-card dash-announcements">
+                  <p>No announcements</p>
+                  <button
+                    type="button"
+                    className="dash-add-btn"
+                    aria-label="Add announcement"
+                    onClick={() => setComposerTab('Announcement')}
+                  >
+                    <Icon name="plus" />
+                  </button>
+                </section>
+
+                <section className="dash-card dash-celebrations">
+                  <div className="dash-celebration-tabs">
+                    {todayCounts.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        className={
+                          celebrationTab === item.label ? 'dash-celebration-tab is-active' : 'dash-celebration-tab'
+                        }
+                        onClick={() => setCelebrationTab(item.label)}
+                      >
+                        <Icon name={item.icon} />
+                        <strong>{item.value}</strong> {item.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="dash-celebration-text">
+                    {celebration.value
+                      ? `${celebration.value} ${celebration.label.toLowerCase()} today`
+                      : `No ${celebration.label.toLowerCase()} today`}
+                  </p>
                 </section>
 
                 {visiblePosts.length === 0 && <p className="dash-empty">No posts in {scope} yet.</p>}
