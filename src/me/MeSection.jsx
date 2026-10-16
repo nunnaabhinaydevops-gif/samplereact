@@ -163,7 +163,7 @@ export default function MeSection({ user }) {
         </div>
       )}
 
-      {tab === 'leave' && <LeavePage uid={profile.id} />}
+      {tab === 'leave' && <LeavePage uid={profile.id} employeeName={profile.fullName || profile.email} />}
 
       {tab === 'documents' && (
         <div className="me-stack">

@@ -1,4 +1,4 @@
-import { LEAVE_TYPES } from './constants'
+import { LEAVE_STATUS_LABELS, LEAVE_TYPES } from './constants'
 import { daysBetweenKeys, shiftDateKey, weekdayOfDateKey } from './time'
 
 function countsByType() {
@@ -7,6 +7,22 @@ function countsByType() {
 
 function leaveDateKeys(from, to) {
   return Array.from({ length: daysBetweenKeys(from, to) + 1 }, (_, index) => shiftDateKey(from, index))
+}
+
+export function filterLeaveHistory(requests, { type, status, search }) {
+  const needle = search.trim().toLowerCase()
+  return requests
+    .filter((request) => type === 'ALL' || request.type === type)
+    .filter((request) => status === 'ALL' || request.status === status)
+    .filter((request) => {
+      if (!needle) return true
+      const typeLabel = LEAVE_TYPES.find((option) => option.value === request.type)?.label
+      return [typeLabel, LEAVE_STATUS_LABELS[request.status], request.reason, request.from, request.to]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle)
+    })
+    .sort((a, b) => b.from.localeCompare(a.from))
 }
 
 export function summarizeLeave(requests, year) {

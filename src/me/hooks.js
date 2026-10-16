@@ -137,6 +137,8 @@ function toLeaveRequest(snap) {
     days: data.days,
     reason: data.reason ?? '',
     status: data.status,
+    createdAt: data.createdAt?.toDate() ?? null,
+    updatedAt: data.updatedAt?.toDate() ?? null,
   }
 }
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cancelLeave, requestLeave } from './api'
 import { LEAVE_TYPES } from './constants'
 import { useLeaveRequests, useNow } from './hooks'
+import LeaveHistory from './LeaveHistory'
 import LeaveStats from './LeaveStats'
 import { summarizeLeave } from './leave'
 import { formatDateKey, toIstDateKey } from './time'
@@ -16,7 +17,7 @@ function dayCount(value) {
   return `${value} ${value === 1 ? 'day' : 'days'}`
 }
 
-export default function LeavePage({ uid }) {
+export default function LeavePage({ uid, employeeName }) {
   const now = useNow()
   const currentYear = Number(toIstDateKey(now).slice(0, 4))
   const [year, setYear] = useState(currentYear)
@@ -220,6 +221,15 @@ export default function LeavePage({ uid }) {
           )
         })}
       </div>
+
+      {leave.status === 'ready' && (
+        <LeaveHistory
+          requests={requests}
+          employeeName={employeeName}
+          onCancel={handleCancel}
+          cancellingId={cancellingId}
+        />
+      )}
     </div>
   )
 }
