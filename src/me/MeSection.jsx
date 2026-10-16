@@ -7,6 +7,7 @@ import AttendanceTimings from './AttendanceTimings'
 import Celebrations from './Celebrations'
 import EmployeeProfile from './EmployeeProfile'
 import EmploymentDetails from './EmploymentDetails'
+import LeavePage from './LeavePage'
 import MyDocuments from './MyDocuments'
 import RemoveEmployee from './RemoveEmployee'
 import { HR_ROLES } from './constants'
@@ -15,6 +16,7 @@ import './me.css'
 
 const TABS = [
   { id: 'attendance', label: 'Attendance' },
+  { id: 'leave', label: 'Leave' },
   { id: 'overview', label: 'Overview' },
   { id: 'documents', label: 'Documents' },
 ]
@@ -160,6 +162,8 @@ export default function MeSection({ user }) {
           />
         </div>
       )}
+
+      {tab === 'leave' && <LeavePage uid={profile.id} />}
 
       {tab === 'documents' && (
         <div className="me-stack">

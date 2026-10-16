@@ -84,6 +84,14 @@ export function punchOut() {
   return callFunction('punchOut')
 }
 
+export function requestLeave(values) {
+  return callFunction('requestLeave', values)
+}
+
+export function cancelLeave(id) {
+  return callFunction('cancelLeave', { id })
+}
+
 export function correctAttendance(payload) {
   return callFunction('correctAttendance', payload)
 }

@@ -127,6 +127,34 @@ export function useAttendanceRange(uid, fromKey, toKey) {
   return state
 }
 
+function toLeaveRequest(snap) {
+  const data = snap.data()
+  return {
+    id: snap.id,
+    type: data.type,
+    from: data.from,
+    to: data.to,
+    days: data.days,
+    reason: data.reason ?? '',
+    status: data.status,
+  }
+}
+
+export function useLeaveRequests(uid) {
+  const [state, setState] = useState({ status: 'loading', requests: [], error: '' })
+
+  useEffect(() => {
+    if (!uid) return undefined
+    return onSnapshot(
+      query(collection(db, 'leaveRequests'), where('uid', '==', uid)),
+      (snap) => setState({ status: 'ready', requests: snap.docs.map(toLeaveRequest), error: '' }),
+      (error) => setState({ status: 'error', requests: [], error: error.message }),
+    )
+  }, [uid])
+
+  return state
+}
+
 export function useEmployeeDocuments(employeeUid, approvedOnly) {
   const [state, setState] = useState({ status: 'loading', items: [], error: '' })
 
