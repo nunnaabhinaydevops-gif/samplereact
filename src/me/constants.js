@@ -29,6 +29,7 @@ export const LEAVE_STATUS_LABELS = {
 export const WORK_LOCATIONS = [
   { value: 'OFFICE', label: 'Office' },
   { value: 'REMOTE', label: 'Remote' },
+  { value: 'WORK_FROM_HOME', label: 'Work From Home' },
 ]
 
 export function workLocationLabel(value) {

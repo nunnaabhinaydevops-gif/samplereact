@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from './firebase'
 import AttendanceSection from './hrms/AttendanceSection.jsx'
@@ -8,6 +8,7 @@ import PayrollSection from './hrms/PayrollSection.jsx'
 import PerformanceSection from './hrms/PerformanceSection.jsx'
 import RecruitmentSection from './hrms/RecruitmentSection.jsx'
 import MeSection from './me/MeSection.jsx'
+import ObjectivesPage from './me/ObjectivesPage.jsx'
 import StaffList from './team/StaffList.jsx'
 import { formatDate } from './hrms/format.js'
 import { getLeaveBalances, holidays, initialLeaveRequests } from './hrms/data.js'
@@ -19,9 +20,31 @@ const ATV_MARK_URL =
 
 const INBOX_COUNT = 3
 
+const meMenu = [
+  { label: 'Attendance' },
+  { label: 'Leave' },
+  {
+    label: 'Performance',
+    children: [
+      { label: 'Objectives', view: 'objectives' },
+      { label: '1:1 Meetings' },
+      { label: 'Feedback' },
+      { label: 'PIP' },
+      { label: 'Reviews' },
+      { label: 'Skills' },
+      { label: 'Competencies & Core values' },
+    ],
+  },
+  {
+    label: 'Expenses & Travel',
+    children: [{ label: 'Pending Expenses' }, { label: 'Past Claims' }, { label: 'Advance Requests' }],
+  },
+  { label: 'Apps', children: [{ label: 'My Apps' }, { label: 'Apps center' }] },
+]
+
 const railItems = [
   { label: 'Home', icon: 'home', view: 'home' },
-  { label: 'Me', icon: 'user', view: 'me' },
+  { label: 'Me', icon: 'user', view: 'me', menu: meMenu },
   { label: 'My Team', icon: 'team', view: 'team' },
   { label: 'Org', icon: 'building' },
   { label: 'Time', icon: 'clock' },
@@ -29,8 +52,6 @@ const railItems = [
   { label: 'Timesheet', icon: 'calendar' },
   { label: 'Performance', icon: 'chart' },
 ]
-
-const subnavItems = ['Home', 'Inbox', 'Notifications', 'Activity', 'Events']
 
 const composerTabs = [
   { label: 'Post', icon: 'edit' },
@@ -184,6 +205,24 @@ const ICONS = {
   ),
 }
 
+function ChevronRight() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="12"
+      height="12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  )
+}
+
 function Icon({ name }) {
   return (
     <svg
@@ -260,11 +299,48 @@ function BalanceRing({ label, remaining, total }) {
 export default function Dashboard({ user }) {
   const now = useNow()
   const [scope, setScope] = useState('Organisation')
-  const [activeSubnav, setActiveSubnav] = useState('Home')
   const [view, setView] = useState('home')
   const [composerTab, setComposerTab] = useState('Post')
   const [celebrationTab, setCelebrationTab] = useState('Birthdays')
   const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests)
+  const [openRailMenu, setOpenRailMenu] = useState(null)
+  const railRef = useRef(null)
+  const railMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!openRailMenu) return
+
+    function handlePointerDown(event) {
+      if (railRef.current?.contains(event.target) || railMenuRef.current?.contains(event.target)) return
+      setOpenRailMenu(null)
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setOpenRailMenu(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openRailMenu])
+
+  function handleRailClick(event, item) {
+    if (item.view) setView(item.view)
+    if (!item.menu || openRailMenu?.item === item) {
+      setOpenRailMenu(null)
+      return
+    }
+    const rect = event.currentTarget.getBoundingClientRect()
+    setOpenRailMenu({ item, top: rect.top, left: rect.right })
+  }
+
+  function closeRailMenu(view) {
+    setOpenRailMenu(null)
+    if (view) setView(view)
+  }
 
   const name = user.displayName || user.email.split('@')[0]
   const initial = name.charAt(0).toUpperCase()
@@ -286,6 +362,8 @@ export default function Dashboard({ user }) {
     day: 'numeric',
     year: 'numeric',
   })
+
+  const activeRailView = view === 'objectives' ? 'me' : view
 
   return (
     <div className="dash">
@@ -316,13 +394,14 @@ export default function Dashboard({ user }) {
         </div>
       </header>
 
-      <nav className="dash-rail">
+      <nav ref={railRef} className="dash-rail">
         {railItems.map((item) => (
           <button
             key={item.label}
             type="button"
-            className={item.view === view ? 'dash-rail-item is-active' : 'dash-rail-item'}
-            onClick={() => item.view && setView(item.view)}
+            className={item.view === activeRailView ? 'dash-rail-item is-active' : 'dash-rail-item'}
+            aria-expanded={item.menu ? openRailMenu?.item === item : undefined}
+            onClick={(event) => handleRailClick(event, item)}
           >
             <Icon name={item.icon} />
             <span>{item.label}</span>
@@ -330,25 +409,45 @@ export default function Dashboard({ user }) {
         ))}
       </nav>
 
-      <nav className="dash-subnav">
-        {subnavItems.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className={activeSubnav === item ? 'dash-subnav-item is-active' : 'dash-subnav-item'}
-            onClick={() => setActiveSubnav(item)}
-          >
-            {item}
-            {item === 'Inbox' && <span className="dash-count">{INBOX_COUNT}</span>}
-          </button>
-        ))}
-      </nav>
+      {openRailMenu && (
+        <ul ref={railMenuRef} className="dash-menu" style={{ top: openRailMenu.top, left: openRailMenu.left }}>
+          {openRailMenu.item.menu.map((entry) => (
+            <li key={entry.label} className="dash-menu-group">
+              <button
+                type="button"
+                className="dash-menu-link"
+                onClick={entry.children ? undefined : () => closeRailMenu(openRailMenu.item.view)}
+              >
+                {entry.label}
+                {entry.children && <ChevronRight />}
+              </button>
+              {entry.children && (
+                <ul className="dash-submenu">
+                  {entry.children.map((child) => (
+                    <li key={child.label}>
+                      <button
+                        type="button"
+                        className="dash-menu-link"
+                        onClick={() => closeRailMenu(child.view ?? openRailMenu.item.view)}
+                      >
+                        {child.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <main className="dash-content">
         {view === 'me' ? (
           <MeSection user={user} />
         ) : view === 'team' ? (
           <StaffList user={user} />
+        ) : view === 'objectives' ? (
+          <ObjectivesPage />
         ) : (
           <>
             <section className="dash-welcome">

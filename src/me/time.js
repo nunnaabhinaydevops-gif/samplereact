@@ -75,16 +75,6 @@ export function formatIstClock(date) {
   }).format(date)
 }
 
-export function formatIstLongDate(date) {
-  return new Intl.DateTimeFormat('en-IN', {
-    timeZone: IST_TIME_ZONE,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date)
-}
-
 export function formatMinutes(total) {
   const hours = Math.floor(total / 60)
   const minutes = total % 60
