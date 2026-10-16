@@ -25,6 +25,13 @@ const ATV_MARK_URL =
 
 const INBOX_COUNT = 3
 
+const initialNotifications = [
+  { id: 1, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '3w', unread: true },
+  { id: 2, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '1mo', unread: true },
+  { id: 3, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '2mo', unread: true },
+  { id: 4, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '3mo', unread: true },
+]
+
 const meMenu = [
   { label: 'Attendance' },
   { label: 'Leave' },
@@ -202,6 +209,27 @@ const ICONS = {
       <path d="M10 21a2 2 0 0 0 4 0" />
     </>
   ),
+  pulse: <path d="M2 12h4l2.5-6 5 12 2.5-6H22" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </>
+  ),
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.4-.2-.8-.4-1.1-.2-.3-.4-.6-.4-1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.4-4-7.7-9-7.7z" />
+      <circle cx="7.5" cy="11" r="1" />
+      <circle cx="10" cy="7.5" r="1" />
+      <circle cx="14.5" cy="7.5" r="1" />
+    </>
+  ),
+  key: (
+    <>
+      <circle cx="8" cy="15" r="4" />
+      <path d="M10.8 12.2L20 3M16 7l3 3M14 9l2 2" />
+    </>
+  ),
   logout: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -243,6 +271,18 @@ function Icon({ name }) {
     >
       {ICONS[name]}
     </svg>
+  )
+}
+
+function ProfileMenuItem({ icon, label, chevron, onClick }) {
+  return (
+    <li>
+      <button type="button" className="dash-profile-item" onClick={onClick}>
+        <Icon name={icon} />
+        <span className="dash-profile-label">{label}</span>
+        {chevron && <ChevronRight />}
+      </button>
+    </li>
   )
 }
 
@@ -313,6 +353,9 @@ export default function Dashboard({ user }) {
   const [teamTab, setTeamTab] = useState('summary')
   const railRef = useRef(null)
   const railMenuRef = useRef(null)
+  const topActionsRef = useRef(null)
+  const [openTopMenu, setOpenTopMenu] = useState(null)
+  const [notifications, setNotifications] = useState(initialNotifications)
 
   useEffect(() => {
     if (!openRailMenu) return
@@ -333,6 +376,34 @@ export default function Dashboard({ user }) {
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [openRailMenu])
+
+  useEffect(() => {
+    if (!openTopMenu) return
+
+    function handlePointerDown(event) {
+      if (topActionsRef.current?.contains(event.target)) return
+      setOpenTopMenu(null)
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setOpenTopMenu(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openTopMenu])
+
+  function toggleTopMenu(menu) {
+    setOpenTopMenu((current) => (current === menu ? null : menu))
+  }
+
+  function markAllNotificationsRead() {
+    setNotifications((items) => items.map((item) => ({ ...item, unread: false })))
+  }
 
   function handleRailClick(event, item) {
     if (item.view) setView(item.view)
@@ -396,21 +467,72 @@ export default function Dashboard({ user }) {
           <Icon name="search" />
           <input type="search" placeholder="Search employees, actions" />
         </label>
-        <div className="dash-topbar-actions">
+        <div ref={topActionsRef} className="dash-topbar-actions">
           <button type="button" className="dash-icon-btn" aria-label="Settings">
             <Icon name="gear" />
           </button>
-          <button type="button" className="dash-icon-btn" aria-label="Notifications">
+          <button
+            type="button"
+            className="dash-icon-btn"
+            aria-label="Notifications"
+            aria-expanded={openTopMenu === 'notifications'}
+            onClick={() => toggleTopMenu('notifications')}
+          >
             <Icon name="bell" />
           </button>
-          <div className="dash-user">
+          <button
+            type="button"
+            className="dash-user"
+            aria-haspopup="menu"
+            aria-expanded={openTopMenu === 'profile'}
+            onClick={() => toggleTopMenu('profile')}
+          >
             <span className="dash-avatar">{initial}</span>
             <span>{name}</span>
-          </div>
-          <button type="button" className="dash-signout" onClick={() => signOut(auth)}>
-            <Icon name="logout" />
-            Sign out
           </button>
+
+          {openTopMenu === 'notifications' && (
+            <div className="dash-popover dash-notifications" role="dialog" aria-label="Notifications">
+              <div className="dash-popover-head">
+                <span>Notifications</span>
+                <button type="button" className="dash-link-btn" onClick={markAllNotificationsRead}>
+                  Mark all as read
+                </button>
+              </div>
+              <ul className="dash-notice-list">
+                {notifications.map((item) => (
+                  <li key={item.id} className={item.unread ? 'dash-notice is-unread' : 'dash-notice'}>
+                    <span className="dash-notice-dot" aria-hidden="true" />
+                    <span className="dash-notice-icon">
+                      <Icon name="pulse" />
+                    </span>
+                    <div>
+                      <p>{item.text}</p>
+                      <time>{item.ago}</time>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {openTopMenu === 'profile' && (
+            <ul className="dash-popover dash-profile-menu">
+              <ProfileMenuItem
+                icon="user"
+                label="My profile"
+                onClick={() => {
+                  setView('me')
+                  setOpenTopMenu(null)
+                }}
+              />
+              <ProfileMenuItem icon="sun" label="Display mode" chevron />
+              <ProfileMenuItem icon="palette" label="Theme color" chevron />
+              <ProfileMenuItem icon="gear" label="User preferences" />
+              <ProfileMenuItem icon="key" label="Change password" />
+              <ProfileMenuItem icon="logout" label="Logout" onClick={() => signOut(auth)} />
+            </ul>
+          )}
         </div>
       </header>
 
