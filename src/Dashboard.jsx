@@ -32,6 +32,20 @@ const initialNotifications = [
   { id: 4, text: 'Got a minute? Share your thoughts in the new Pulse Survey.', ago: '3mo', unread: true },
 ]
 
+const DISPLAY_MODES = [
+  { id: 'light', label: 'Light', icon: 'sun' },
+  { id: 'dark', label: 'Dark', icon: 'moon' },
+  { id: 'auto', label: 'Auto', icon: 'monitor' },
+]
+
+const THEME_COLORS = [
+  { id: 'purple', label: 'Purple', value: '#5b4bb0' },
+  { id: 'blue', label: 'Blue', value: '#1f5fd1' },
+  { id: 'pink', label: 'Pink', value: '#b4487d' },
+  { id: 'green', label: 'Green', value: '#4ea56f' },
+  { id: 'orange', label: 'Orange', value: '#e89a2e' },
+]
+
 const meMenu = [
   { label: 'Attendance' },
   { label: 'Leave' },
@@ -210,6 +224,14 @@ const ICONS = {
     </>
   ),
   pulse: <path d="M2 12h4l2.5-6 5 12 2.5-6H22" />,
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
+  monitor: (
+    <>
+      <rect x="2" y="4" width="20" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </>
+  ),
+  check: <path d="M20 6L9 17l-5-5" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />
@@ -274,14 +296,22 @@ function Icon({ name }) {
   )
 }
 
-function ProfileMenuItem({ icon, label, chevron, onClick }) {
+function ProfileMenuItem({ icon, label, onClick, expanded, children }) {
+  const hasSubmenu = expanded !== undefined
+
   return (
-    <li>
-      <button type="button" className="dash-profile-item" onClick={onClick}>
+    <li className="dash-profile-group">
+      <button
+        type="button"
+        className={expanded ? 'dash-profile-item is-open' : 'dash-profile-item'}
+        aria-expanded={hasSubmenu ? expanded : undefined}
+        onClick={onClick}
+      >
         <Icon name={icon} />
         <span className="dash-profile-label">{label}</span>
-        {chevron && <ChevronRight />}
+        {hasSubmenu && <ChevronRight />}
       </button>
+      {expanded && children}
     </li>
   )
 }
@@ -356,6 +386,9 @@ export default function Dashboard({ user }) {
   const topActionsRef = useRef(null)
   const [openTopMenu, setOpenTopMenu] = useState(null)
   const [notifications, setNotifications] = useState(initialNotifications)
+  const [openProfileSubmenu, setOpenProfileSubmenu] = useState(null)
+  const [displayMode, setDisplayMode] = useState('light')
+  const [themeColor, setThemeColor] = useState(THEME_COLORS[0])
 
   useEffect(() => {
     if (!openRailMenu) return
@@ -399,6 +432,11 @@ export default function Dashboard({ user }) {
 
   function toggleTopMenu(menu) {
     setOpenTopMenu((current) => (current === menu ? null : menu))
+    setOpenProfileSubmenu(null)
+  }
+
+  function toggleProfileSubmenu(submenu) {
+    setOpenProfileSubmenu((current) => (current === submenu ? null : submenu))
   }
 
   function markAllNotificationsRead() {
@@ -456,7 +494,7 @@ export default function Dashboard({ user }) {
   const activeRailView = view === 'objectives' ? 'me' : view
 
   return (
-    <div className="dash">
+    <div className="dash" style={{ '--dash-accent': themeColor.value }}>
       <div className="dash-brandcell">
         <img src={ATV_MARK_URL} alt="ATV Technologies" />
       </div>
@@ -526,8 +564,58 @@ export default function Dashboard({ user }) {
                   setOpenTopMenu(null)
                 }}
               />
-              <ProfileMenuItem icon="sun" label="Display mode" chevron />
-              <ProfileMenuItem icon="palette" label="Theme color" chevron />
+              <ProfileMenuItem
+                icon="sun"
+                label="Display mode"
+                expanded={openProfileSubmenu === 'display'}
+                onClick={() => toggleProfileSubmenu('display')}
+              >
+                <ul className="dash-popover dash-profile-submenu">
+                  {DISPLAY_MODES.map((mode) => (
+                    <li key={mode.id}>
+                      <button
+                        type="button"
+                        className={displayMode === mode.id ? 'dash-profile-item is-selected' : 'dash-profile-item'}
+                        onClick={() => setDisplayMode(mode.id)}
+                      >
+                        <Icon name={mode.icon} />
+                        <span className="dash-profile-label">{mode.label}</span>
+                        {displayMode === mode.id && (
+                          <span className="dash-profile-check">
+                            <Icon name="check" />
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </ProfileMenuItem>
+              <ProfileMenuItem
+                icon="palette"
+                label="Theme color"
+                expanded={openProfileSubmenu === 'theme'}
+                onClick={() => toggleProfileSubmenu('theme')}
+              >
+                <ul className="dash-popover dash-profile-submenu">
+                  {THEME_COLORS.map((color) => (
+                    <li key={color.id}>
+                      <button
+                        type="button"
+                        className={themeColor.id === color.id ? 'dash-profile-item is-selected' : 'dash-profile-item'}
+                        onClick={() => setThemeColor(color)}
+                      >
+                        <span className="dash-swatch" style={{ background: color.value }} />
+                        <span className="dash-profile-label">{color.label}</span>
+                        {themeColor.id === color.id && (
+                          <span className="dash-profile-check">
+                            <Icon name="check" />
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </ProfileMenuItem>
               <ProfileMenuItem icon="gear" label="User preferences" />
               <ProfileMenuItem icon="key" label="Change password" />
               <ProfileMenuItem icon="logout" label="Logout" onClick={() => signOut(auth)} />

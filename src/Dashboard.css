@@ -258,6 +258,33 @@
   flex: 1;
 }
 
+.dash-profile-group {
+  position: relative;
+}
+
+.dash-profile-item.is-open,
+.dash-profile-item.is-selected {
+  background: #f1f4fa;
+}
+
+.dash-profile-submenu {
+  top: -6px;
+  right: calc(100% + 8px);
+  width: 180px;
+  padding: 6px 0;
+}
+
+.dash-swatch {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.dash-profile-check svg {
+  color: var(--dash-accent);
+}
+
 .dash-avatar {
   display: grid;
   place-items: center;
