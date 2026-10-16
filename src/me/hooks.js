@@ -11,6 +11,7 @@ function toAttendanceRecord(snap) {
   const data = snap.data()
   return {
     id: snap.id,
+    uid: data.uid,
     date: data.date,
     status: data.status ?? 'present',
     workLocation: data.workLocation ?? 'OFFICE',
@@ -131,6 +132,7 @@ function toLeaveRequest(snap) {
   const data = snap.data()
   return {
     id: snap.id,
+    uid: data.uid,
     type: data.type,
     from: data.from,
     to: data.to,
@@ -153,6 +155,36 @@ export function useLeaveRequests(uid) {
       (error) => setState({ status: 'error', requests: [], error: error.message }),
     )
   }, [uid])
+
+  return state
+}
+
+export function useTeamAttendanceRange(enabled, fromKey, toKey) {
+  const [state, setState] = useState({ status: 'loading', records: [], error: '' })
+
+  useEffect(() => {
+    if (!enabled) return undefined
+    return onSnapshot(
+      query(collection(db, 'attendance'), where('date', '>=', fromKey), where('date', '<=', toKey)),
+      (snap) => setState({ status: 'ready', records: snap.docs.map(toAttendanceRecord), error: '' }),
+      (error) => setState({ status: 'error', records: [], error: error.message }),
+    )
+  }, [enabled, fromKey, toKey])
+
+  return state
+}
+
+export function useApprovedLeaveRequests(enabled) {
+  const [state, setState] = useState({ status: 'loading', requests: [], error: '' })
+
+  useEffect(() => {
+    if (!enabled) return undefined
+    return onSnapshot(
+      query(collection(db, 'leaveRequests'), where('status', '==', 'APPROVED')),
+      (snap) => setState({ status: 'ready', requests: snap.docs.map(toLeaveRequest), error: '' }),
+      (error) => setState({ status: 'error', requests: [], error: error.message }),
+    )
+  }, [enabled])
 
   return state
 }

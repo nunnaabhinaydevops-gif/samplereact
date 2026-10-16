@@ -42,6 +42,317 @@
   font: inherit;
 }
 
+.team-tabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid #e3e9f2;
+}
+
+.team-tab {
+  position: relative;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  color: #6b7a90;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &.is-active {
+    color: #14213d;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 3px;
+      background: #14213d;
+    }
+  }
+}
+
+.team-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.team-summary-row,
+.team-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.team-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.team-summary .dash-card {
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.team-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #14213d;
+}
+
+.team-stat {
+  gap: 10px;
+  border-left-width: 3px;
+  border-left-style: solid;
+}
+
+.team-stat-cyan {
+  border-left-color: #2fbad6;
+}
+
+.team-stat-magenta {
+  border-left-color: #c56cc0;
+}
+
+.team-stat-olive {
+  border-left-color: #8fb339;
+}
+
+.team-stat-yellow {
+  border-left-color: #f2b705;
+}
+
+.team-stat-label {
+  font-size: 13px;
+  color: #14213d;
+}
+
+.team-stat-value {
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  color: #14213d;
+}
+
+.team-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.team-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 84px;
+  font-size: 12px;
+  color: #14213d;
+}
+
+.team-person-name {
+  max-width: 84px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-avatar,
+.team-cal-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #2f8fe0;
+  color: #fff;
+  font-weight: 600;
+  object-fit: cover;
+}
+
+.team-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 13px;
+}
+
+.team-section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #14213d;
+}
+
+.team-calendar {
+  gap: 12px;
+}
+
+.team-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #14213d;
+}
+
+.team-nav-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: #5b4bb0;
+  color: #fff;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.team-cal-scroll {
+  overflow-x: auto;
+}
+
+.team-cal-grid {
+  display: grid;
+  align-items: center;
+  min-width: max-content;
+}
+
+.team-cal-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 6px;
+}
+
+.team-cal-weekday {
+  font-size: 11px;
+  color: #14213d;
+}
+
+.team-cal-dots {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+}
+
+.team-cal-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 12px;
+  font-size: 12px;
+  color: #14213d;
+  white-space: nowrap;
+}
+
+.team-cal-avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+
+.team-cal-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-cal-cell {
+  display: grid;
+  place-items: center;
+  height: 32px;
+}
+
+.team-day {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: #14213d;
+}
+
+.team-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.team-cal-head .team-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.team-kind-wfh {
+  background: #8e7cd1;
+  color: #fff;
+}
+
+.team-kind-on-duty {
+  background: #c56cc0;
+  color: #fff;
+}
+
+.team-kind-leave {
+  background: #4fc1d6;
+  color: #fff;
+}
+
+.team-kind-unpaid-leave {
+  background: #b9c2a6;
+  color: #fff;
+}
+
+.team-kind-no-attendance {
+  background: #ef8a85;
+  color: #fff;
+}
+
+.team-kind-weekly-off {
+  background: #f2c94c;
+  color: #fff;
+}
+
+.team-kind-holiday {
+  background: #9bb640;
+  color: #fff;
+}
+
+.team-kind-someone-leave {
+  background: #2a6fc9;
+}
+
+.team-kind-multiple-leave {
+  background: #f0852d;
+}
+
+.team-kind-someone-wfh {
+  background: #2b3a67;
+}
+
+.team-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  font-size: 12px;
+  color: #14213d;
+}
+
+.team-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
